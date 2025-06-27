@@ -9,5 +9,5 @@ module.exports = {
   firefox: {
     skipDownload: false,
   },
-  defaultBrowser: "chrome",
+  defaultBrowser: "firefox",
 };

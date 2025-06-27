@@ -1,11 +1,10 @@
-import puppeteer from "puppeteer";
+import { login } from "./actions/login";
+import { start } from "./actions/start";
 
-(async () => {
-  const browser = await puppeteer.launch({
-    headless: false,
-  });
-  const page = await browser.newPage();
+const main = async () => {
+  const { page } = await start();
 
-  await page.goto("https://www.instagram.com/");
-  await page.setViewport({ width: 1080, height: 1024 });
-})();
+  await login(page);
+};
+
+main();
