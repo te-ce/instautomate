@@ -1,12 +1,19 @@
-export const doWithTimeout = async (
-  fn: Promise<void>,
-  timeout: number | undefined = 2000,
-) => {
-  // Generate a random offset between -2000 and +2000
-  const randomOffset = Math.random() * 4000 - 2000;
-  const randomizedTimeout = timeout + randomOffset;
+const MIN_TIMEOUT = 2000;
 
-  setTimeout(async () => {
-    return await fn;
-  }, randomizedTimeout);
+export const doWithTimeout = async (
+  fns: (() => Promise<void>)[],
+  timeout: number = 2000,
+) => {
+  for (const [i, fn] of fns.entries()) {
+    // Execute the function and wait for it to complete
+    await fn();
+
+    // If this isn't the last function, wait for the timeout before the next one
+    if (i < fns.length - 1) {
+      const randomOffset = Math.random() * timeout * 2 - timeout + MIN_TIMEOUT;
+      const randomizedTimeout = timeout + randomOffset;
+
+      await new Promise((resolve) => setTimeout(resolve, randomizedTimeout));
+    }
+  }
 };

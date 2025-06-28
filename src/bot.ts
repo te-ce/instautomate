@@ -5,7 +5,7 @@ import { start } from "./actions/start";
 const main = async () => {
   const { page } = await start();
 
-  doWithTimeout(login(page));
+  doWithTimeout([() => login(page)]);
 };
 
 main();
