@@ -1,28 +1,10 @@
 import assert from "assert";
-import fs from "fs-extra";
-import { join } from "path";
 import UserAgent from "user-agents";
-import JSONDB, { User } from "./db.ts";
-import { Page } from "puppeteer";
-
-// NOTE duplicated inside puppeteer page
-function shuffleArray(arrayIn: any[]) {
-  const array = [...arrayIn];
-  for (let i = array.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
-
-// https://stackoverflow.com/questions/14822153/escape-single-quote-in-xpath-with-nokogiri
-// example str: "That's mine", he said.
-function escapeXpathStr(str) {
-  const parts = str.split("'").map((token) => `'${token}'`);
-  if (parts.length === 1) return `${parts[0]}`;
-  const str2 = parts.join(', "\'", ');
-  return `concat(${str2})`;
-}
+import JSONDB, { User } from "./db/db.ts";
+import { shuffleArray, escapeXpathStr, sleep } from "./util/util.ts";
+import { Navigation } from "./actions/navigation.ts";
+import { Cookies } from "./actions/cookies.ts";
+import { takeScreenshot } from "./actions/screenshot.ts";
 
 const botWorkShiftHours = 16;
 const dayMs = 24 * 60 * 60 * 1000;
@@ -99,63 +81,163 @@ export const Instauto = async (db, browser, options) => {
     getLikedPhotosLastTimeUnit(time).length;
 
   // State
-  // eslint-disable-next-line prefer-const
-  let page: Page;
+  const page = await browser.newPage();
+  const { gotoUrl, gotoWithRetry, tryPressButton } = Navigation(page);
+  const { tryLoadCookies, trySaveCookies, tryDeleteCookies } = Cookies(browser);
 
-  async function takeScreenshot() {
-    if (!screenshotOnError) return;
-    try {
-      const fileName = `${new Date().getTime()}.jpg`;
-      logger.log("Taking screenshot", fileName);
-      await page.screenshot({
-        path: join(screenshotsPath, fileName) as `${string}.jpeg`,
-        type: "jpeg",
-        quality: 30,
-      });
-    } catch (err) {
-      logger.error("Failed to take screenshot", err);
+  // https://github.com/mifi/SimpleInstaBot/issues/118#issuecomment-1067883091
+  await page.setExtraHTTPHeaders({ "Accept-Language": "en" });
+
+  if (randomizeUserAgent) {
+    const userAgentGenerated = new UserAgent({ deviceCategory: "desktop" });
+    await page.setUserAgent(userAgentGenerated.toString());
+  }
+  if (userAgent) await page.setUserAgent(userAgent);
+
+  if (enableCookies) await tryLoadCookies();
+
+  const goHome = async () => gotoUrl(`${instagramBaseUrl}/?hl=en`);
+
+  async function tryClickLogin() {
+    async function tryClickButton(xpath) {
+      const btn = (await page.$$(`xpath/${xpath}`))[0];
+      if (!btn) return false;
+      await btn.click();
+      return true;
     }
+
+    if (await tryClickButton("//button[.//text() = 'Log In']")) return true;
+    if (await tryClickButton("//button[.//text() = 'Log in']")) return true; // https://github.com/mifi/instauto/pull/110 https://github.com/mifi/instauto/issues/109
+    return false;
   }
 
-  async function tryLoadCookies() {
-    try {
-      const cookies = JSON.parse(await fs.readFile(cookiesPath, "utf8"));
-      for (const cookie of cookies) {
-        if (cookie.name !== "ig_lang") await browser.setCookie(cookie);
-      }
-    } catch (err) {
-      logger.error("No cookies found", err);
+  await goHome();
+  await sleep(1000);
+
+  await tryPressButton(
+    await page.$$('xpath///button[contains(text(), "Allow all cookies")]'),
+    "Accept cookies dialog",
+  );
+  await tryPressButton(
+    await page.$$('xpath///button[contains(text(), "Accept")]'),
+    "Accept cookies dialog",
+  );
+  await tryPressButton(
+    await page.$$(
+      'xpath///button[contains(text(), "Only allow essential cookies")]',
+    ),
+    "Accept cookies dialog 2 button 1",
+    10000,
+  );
+  await tryPressButton(
+    await page.$$(
+      'xpath///button[contains(text(), "Allow essential and optional cookies")]',
+    ),
+    "Accept cookies dialog 2 button 2",
+    10000,
+  );
+
+  if (!(await isLoggedIn())) {
+    if (!myUsername || !password) {
+      await tryDeleteCookies();
+      throw new Error(
+        "No longer logged in. Deleting cookies and aborting. Need to provide username/password",
+      );
     }
+
+    try {
+      await page.click('a[href="/accounts/login/?source=auth_switcher"]');
+      await sleep(1000);
+    } catch (err) {
+      logger.info("No login page button, assuming we are on login form", err);
+    }
+
+    // Mobile version https://github.com/mifi/SimpleInstaBot/issues/7
+    await tryPressButton(
+      await page.$$('xpath///button[contains(text(), "Log In")]'),
+      "Login form button",
+    );
+
+    await page.type('input[name="username"]', myUsername, { delay: 50 });
+    await sleep(1000);
+    await page.type('input[name="password"]', password, { delay: 50 });
+    await sleep(1000);
+
+    for (;;) {
+      const didClickLogin = await tryClickLogin();
+      if (didClickLogin) break;
+      logger.warn(
+        "Login button not found. Maybe you can help me click it? And also report an issue on github with a screenshot of what you're seeing :)",
+      );
+      await sleep(6000);
+    }
+
+    await sleep(10000);
+
+    // Sometimes login button gets stuck with a spinner
+    // https://github.com/mifi/SimpleInstaBot/issues/25
+    if (!(await isLoggedIn())) {
+      logger.log("Still not logged in, trying to reload loading page");
+      await page.reload();
+      await sleep(5000);
+    }
+
+    let warnedAboutLoginFail = false;
+    while (!(await isLoggedIn())) {
+      if (!warnedAboutLoginFail)
+        logger.warn(
+          'WARNING: Login has not succeeded. This could be because of an incorrect username/password, or a "suspicious login attempt"-message. You need to manually complete the process, or if really logged in, click the Instagram logo in the top left to go to the Home page.',
+        );
+      warnedAboutLoginFail = true;
+      await sleep(5000);
+    }
+
+    await goHome();
+    await sleep(1000);
+
+    // Mobile version https://github.com/mifi/SimpleInstaBot/issues/7
+    await tryPressButton(
+      await page.$$('xpath///button[contains(text(), "Save Info")]'),
+      "Login info dialog: Save Info",
+    );
+    // May sometimes be "Save info" too? https://github.com/mifi/instauto/pull/70
+    await tryPressButton(
+      await page.$$('xpath///button[contains(text(), "Save info")]'),
+      "Login info dialog: Save info",
+    );
   }
 
-  async function trySaveCookies() {
-    try {
-      logger.log("Saving cookies");
-      const cookies = await page.cookies();
+  await tryPressButton(
+    await page.$$('xpath///button[contains(text(), "Not Now")]'),
+    "Turn on Notifications dialog",
+  );
 
-      await fs.writeFile(cookiesPath, JSON.stringify(cookies, null, 2));
-    } catch (err) {
-      logger.error("Failed to save cookies", err);
-    }
+  await trySaveCookies();
+
+  logger.log(
+    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(hourMs)} in the last hour`,
+  );
+  logger.log(
+    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(dayMs)} in the last 24 hours`,
+  );
+  logger.log(
+    `Have liked ${getNumLikesThisTimeUnit(dayMs)} images in the last 24 hours`,
+  );
+
+  try {
+    const detectedUsername = await page.evaluate(
+      () => (window as any)._sharedData.config.viewer.username,
+    );
+    if (detectedUsername) myUsername = detectedUsername;
+  } catch (err) {
+    logger.error("Failed to detect username", err);
   }
 
-  async function tryDeleteCookies() {
-    try {
-      logger.log("Deleting cookies");
-      await fs.unlink(cookiesPath);
-    } catch (err) {
-      logger.error("No cookies to delete", err);
-    }
+  if (!myUsername) {
+    throw new Error("Don't know what's my username");
   }
 
-  const sleepFixed = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  const sleep = (ms, deviation = 1) => {
-    let msWithDev = (Math.random() * deviation + 1) * ms;
-    if (dryRun) msWithDev = Math.min(3000, msWithDev); // for dryRun, no need to wait so long
-    logger.log("Waiting", (msWithDev / 1000).toFixed(2), "sec");
-    return sleepFixed(msWithDev);
-  };
+  const { id: myUserId } = await navigateToUserAndGetData(myUsername);
 
   async function onImageLiked({ username, href }) {
     await addLikedPhoto({ username, href, time: new Date().getTime() });
@@ -216,40 +298,6 @@ export const Instauto = async (db, browser, options) => {
       new Date().getTime() - followedUserEntry.time <
       dontUnfollowUntilTimeElapsed
     );
-  }
-
-  // See https://github.com/mifi/SimpleInstaBot/issues/140#issuecomment-1149105387
-  const gotoUrl = async (url) =>
-    page.goto(url, {
-      waitUntil: ["load", "domcontentloaded", "networkidle2"],
-    });
-
-  async function gotoWithRetry(url) {
-    const maxAttempts = 3;
-    for (let attempt = 0; ; attempt += 1) {
-      logger.log(`Goto ${url}`);
-      const response = await gotoUrl(url);
-      const status = response?.status();
-      logger.log("Page loaded");
-      await sleep(2000);
-
-      // https://www.reddit.com/r/Instagram/comments/kwrt0s/error_560/
-      // https://github.com/mifi/instauto/issues/60
-      if (![560, 429].includes(status ?? 0)) return status;
-
-      if (attempt > maxAttempts) {
-        throw new Error(
-          `Navigate to user failed after ${maxAttempts} attempts, last status: ${status}`,
-        );
-      }
-
-      logger.info(`Got ${status} - Retrying request later...`);
-      if (status === 429)
-        logger.warn(
-          "429 Too Many Requests could mean that Instagram suspects you're using a bot. You could try to use the Instagram Mobile app from the same IP for a few days first",
-        );
-      await sleep((attempt + 1) * 30 * 60 * 1000);
-    }
   }
 
   const getUserPageUrl = (username) =>
@@ -595,8 +643,9 @@ export const Instauto = async (db, browser, options) => {
     return res;
   }
 
-  const isLoggedIn = async () =>
-    (await page.$$('xpath///*[@aria-label="Home"]')).length === 1;
+  async function isLoggedIn() {
+    return (await page.$$('xpath///*[@aria-label="Home"]')).length === 1;
+  }
 
   async function* graphqlQueryUsers({
     queryHash,
@@ -870,8 +919,6 @@ export const Instauto = async (db, browser, options) => {
       category_name: categoryName,
     } = graphqlUser;
 
-    // logger.log('followedByCount:', followedByCount, 'followsCount:', followsCount);
-
     const ratio = followedByCount / (followsCount || 1);
 
     if (isPrivate && skipPrivate) {
@@ -1002,7 +1049,7 @@ export const Instauto = async (db, browser, options) => {
           }
         } catch (err) {
           logger.error(`Failed to process follower ${follower}`, err);
-          await takeScreenshot();
+          await takeScreenshot(page);
           await sleep(20000);
         }
       }
@@ -1058,7 +1105,7 @@ export const Instauto = async (db, browser, options) => {
           username,
           err,
         );
-        await takeScreenshot();
+        await takeScreenshot(page);
         await sleep(60 * 1000);
       }
     }
@@ -1143,7 +1190,7 @@ export const Instauto = async (db, browser, options) => {
         await followUserRespectingRestrictions({ username, skipPrivate });
       } catch (err) {
         logger.error(`Failed to follow user ${username}, continuing`, err);
-        await takeScreenshot();
+        await takeScreenshot(page);
         await sleep(20000);
       }
     }
@@ -1152,176 +1199,6 @@ export const Instauto = async (db, browser, options) => {
   function getPage() {
     return page;
   }
-
-  page = await browser.newPage();
-
-  // https://github.com/mifi/SimpleInstaBot/issues/118#issuecomment-1067883091
-  await page.setExtraHTTPHeaders({ "Accept-Language": "en" });
-
-  if (randomizeUserAgent) {
-    const userAgentGenerated = new UserAgent({ deviceCategory: "desktop" });
-    await page.setUserAgent(userAgentGenerated.toString());
-  }
-  if (userAgent) await page.setUserAgent(userAgent);
-
-  if (enableCookies) await tryLoadCookies();
-
-  const goHome = async () => gotoUrl(`${instagramBaseUrl}/?hl=en`);
-
-  async function tryPressButton(elementHandles, name, sleepMs = 3000) {
-    try {
-      if (elementHandles.length === 1) {
-        logger.log(`Pressing button: ${name}`);
-        elementHandles[0].click();
-        await sleep(sleepMs);
-      }
-    } catch (err) {
-      logger.warn(`Failed to press button: ${name}`, err);
-    }
-  }
-
-  async function tryClickLogin() {
-    async function tryClickButton(xpath) {
-      const btn = (await page.$$(`xpath/${xpath}`))[0];
-      if (!btn) return false;
-      await btn.click();
-      return true;
-    }
-
-    if (await tryClickButton("//button[.//text() = 'Log In']")) return true;
-    if (await tryClickButton("//button[.//text() = 'Log in']")) return true; // https://github.com/mifi/instauto/pull/110 https://github.com/mifi/instauto/issues/109
-    return false;
-  }
-
-  await goHome();
-  await sleep(1000);
-
-  await tryPressButton(
-    await page.$$('xpath///button[contains(text(), "Allow all cookies")]'),
-    "Accept cookies dialog",
-  );
-  await tryPressButton(
-    await page.$$('xpath///button[contains(text(), "Accept")]'),
-    "Accept cookies dialog",
-  );
-  await tryPressButton(
-    await page.$$(
-      'xpath///button[contains(text(), "Only allow essential cookies")]',
-    ),
-    "Accept cookies dialog 2 button 1",
-    10000,
-  );
-  await tryPressButton(
-    await page.$$(
-      'xpath///button[contains(text(), "Allow essential and optional cookies")]',
-    ),
-    "Accept cookies dialog 2 button 2",
-    10000,
-  );
-
-  if (!(await isLoggedIn())) {
-    if (!myUsername || !password) {
-      await tryDeleteCookies();
-      throw new Error(
-        "No longer logged in. Deleting cookies and aborting. Need to provide username/password",
-      );
-    }
-
-    try {
-      await page.click('a[href="/accounts/login/?source=auth_switcher"]');
-      await sleep(1000);
-    } catch (err) {
-      logger.info("No login page button, assuming we are on login form", err);
-    }
-
-    // Mobile version https://github.com/mifi/SimpleInstaBot/issues/7
-    await tryPressButton(
-      await page.$$('xpath///button[contains(text(), "Log In")]'),
-      "Login form button",
-    );
-
-    await page.type('input[name="username"]', myUsername, { delay: 50 });
-    await sleep(1000);
-    await page.type('input[name="password"]', password, { delay: 50 });
-    await sleep(1000);
-
-    for (;;) {
-      const didClickLogin = await tryClickLogin();
-      if (didClickLogin) break;
-      logger.warn(
-        "Login button not found. Maybe you can help me click it? And also report an issue on github with a screenshot of what you're seeing :)",
-      );
-      await sleep(6000);
-    }
-
-    await sleepFixed(10000);
-
-    // Sometimes login button gets stuck with a spinner
-    // https://github.com/mifi/SimpleInstaBot/issues/25
-    if (!(await isLoggedIn())) {
-      logger.log("Still not logged in, trying to reload loading page");
-      await page.reload();
-      await sleep(5000);
-    }
-
-    let warnedAboutLoginFail = false;
-    while (!(await isLoggedIn())) {
-      if (!warnedAboutLoginFail)
-        logger.warn(
-          'WARNING: Login has not succeeded. This could be because of an incorrect username/password, or a "suspicious login attempt"-message. You need to manually complete the process, or if really logged in, click the Instagram logo in the top left to go to the Home page.',
-        );
-      warnedAboutLoginFail = true;
-      await sleep(5000);
-    }
-
-    await goHome();
-    await sleep(1000);
-
-    // Mobile version https://github.com/mifi/SimpleInstaBot/issues/7
-    await tryPressButton(
-      await page.$$('xpath///button[contains(text(), "Save Info")]'),
-      "Login info dialog: Save Info",
-    );
-    // May sometimes be "Save info" too? https://github.com/mifi/instauto/pull/70
-    await tryPressButton(
-      await page.$$('xpath///button[contains(text(), "Save info")]'),
-      "Login info dialog: Save info",
-    );
-  }
-
-  await tryPressButton(
-    await page.$$('xpath///button[contains(text(), "Not Now")]'),
-    "Turn on Notifications dialog",
-  );
-
-  await trySaveCookies();
-
-  logger.log(
-    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(hourMs)} in the last hour`,
-  );
-  logger.log(
-    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(dayMs)} in the last 24 hours`,
-  );
-  logger.log(
-    `Have liked ${getNumLikesThisTimeUnit(dayMs)} images in the last 24 hours`,
-  );
-
-  try {
-    const detectedUsername = await page.evaluate(
-      () => (window as any)._sharedData.config.viewer.username,
-    );
-    if (detectedUsername) myUsername = detectedUsername;
-  } catch (err) {
-    logger.error("Failed to detect username", err);
-  }
-
-  if (!myUsername) {
-    throw new Error("Don't know what's my username");
-  }
-
-  const { id: myUserId } = await navigateToUserAndGetData(myUsername);
-
-  // --- END OF INITIALIZATION
 
   async function doesUserFollowMe(username) {
     try {

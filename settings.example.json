@@ -14,7 +14,9 @@
     "shouldLikeMedia": false,
     "enableLikeImages": false,
     "likeImagesMax": 3,
-    "skipPrivate": true
+    "skipPrivate": true,
+    "cookiesPath": "./cookies.json",
+    "screenshotsPath": "."
   },
   "usersToFollowFollowersOf": ["InstaName"]
 }
