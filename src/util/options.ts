@@ -7,6 +7,9 @@ export const options = {
   username: settings.login.name ?? "",
   password: settings.login.password ?? "",
 
+  enableCookies: true,
+  randomizeUserAgent: true,
+
   // Global limit that prevents follow or unfollows (total) to exceed this number over a sliding window of one hour:
   maxFollowsPerHour: settings.config.maxFollowsPerHour ?? 20,
   // Global limit that prevents follow or unfollows (total) to exceed this number over a sliding window of one day:
@@ -35,7 +38,7 @@ export const options = {
   followUserMinFollowing: null,
 
   // Custom logic filter for user follow
-  shouldFollowUser: null,
+  shouldFollowUser: null as ((data: any) => boolean) | null,
   /* Example to skip bussiness accounts
   shouldFollowUser: function (data) {
     console.log('isBusinessAccount:', data.isBusinessAccount);
@@ -52,7 +55,9 @@ export const options = {
   }, */
 
   // Custom logic filter for liking media
-  shouldLikeMedia: settings.config.shouldLikeMedia ?? null,
+  shouldLikeMedia:
+    settings.config.shouldLikeMedia ??
+    (null as ((data: any) => boolean) | null),
 
   // NOTE: The dontUnfollowUntilTimeElapsed option is ONLY for the unfollowNonMutualFollowers function
   // This specifies the time during which the bot should not touch users that it has previously followed (in milliseconds)
@@ -61,7 +66,7 @@ export const options = {
   dontUnfollowUntilTimeElapsed: 3 * 24 * 60 * 60 * 1000,
 
   // Usernames that we should not touch, e.g. your friends and actual followings
-  excludeUsers: [],
+  excludeUsers: [] as string[],
 
   // If true, will not do any actions (defaults to true)
   dryRun: settings.config.dryRun,

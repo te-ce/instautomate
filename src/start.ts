@@ -42,7 +42,7 @@ import { options } from "./util/options.ts";
       likedPhotosDbPath: "./liked-photos.json",
     });
 
-    const instauto = await Instauto(instautoDb, browser, options);
+    const instauto = await Instauto(instautoDb, browser);
 
     // This can be used to unfollow people:
     // Will unfollow auto-followed AND manually followed accounts who are not following us back, after some time has passed

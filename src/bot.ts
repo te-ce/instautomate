@@ -6,6 +6,7 @@ import { Navigation } from "./actions/navigation.ts";
 import { Cookies } from "./actions/cookies.ts";
 import { takeScreenshot } from "./actions/screenshot.ts";
 import { INSTAGRAM_URL } from "./util/const.ts";
+import { options } from "./util/options.ts";
 
 const botWorkShiftHours = 16;
 const dayMs = 24 * 60 * 60 * 1000;
@@ -18,16 +19,12 @@ class DailyLimitReachedError extends Error {
   }
 }
 
-export const Instauto = async (db, browser, options) => {
+export const Instauto = async (db, browser) => {
   const {
-    cookiesPath,
-
     username: myUsernameIn,
     password,
-    enableCookies = true,
-
-    randomizeUserAgent = true,
-    userAgent,
+    enableCookies,
+    randomizeUserAgent,
 
     maxFollowsPerHour = 20,
     maxFollowsPerDay = 150,
@@ -56,7 +53,6 @@ export const Instauto = async (db, browser, options) => {
   let myUsername = myUsernameIn;
   const userDataCache = {};
 
-  assert(cookiesPath);
   assert(db);
 
   assert(
@@ -89,7 +85,6 @@ export const Instauto = async (db, browser, options) => {
     const userAgentGenerated = new UserAgent({ deviceCategory: "desktop" });
     await page.setUserAgent(userAgentGenerated.toString());
   }
-  if (userAgent) await page.setUserAgent(userAgent);
 
   if (enableCookies) await tryLoadCookies();
 
