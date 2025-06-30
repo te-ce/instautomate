@@ -1,4 +1,5 @@
 import { ElementHandle, Page } from "puppeteer";
+import { INSTAGRAM_URL } from "src/util/const";
 import { logger } from "src/util/logger";
 import { sleep } from "src/util/util";
 
@@ -18,6 +19,8 @@ export const Navigation = (page: Page) => {
       logger.warn(`Failed to press button: ${name}`, err);
     }
   }
+
+  const goHome = async () => gotoUrl(`${INSTAGRAM_URL}/?hl=en`);
 
   // See https://github.com/mifi/SimpleInstaBot/issues/140#issuecomment-1149105387
   const gotoUrl = async (url: string) =>
@@ -57,5 +60,6 @@ export const Navigation = (page: Page) => {
     tryPressButton,
     gotoWithRetry,
     gotoUrl,
+    goHome,
   };
 };

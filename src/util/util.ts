@@ -1,4 +1,6 @@
+import { Page } from "puppeteer";
 import { logger } from "src/util/logger";
+import { INSTAGRAM_URL } from "./const";
 
 export function shuffleArray(arrayIn: any[]) {
   const array = [...arrayIn];
@@ -25,3 +27,14 @@ export const sleep = (ms, deviation = 1) => {
   logger.log("Waiting", (msWithDeviation / 1000).toFixed(2), "sec");
   return sleepFixed(msWithDeviation);
 };
+
+export const getPageJson = async (page: Page) => {
+  return JSON.parse(
+    (await (
+      await (await page.$("pre"))?.getProperty("textContent")
+    )?.jsonValue()) ?? "{}",
+  );
+};
+
+export const getUserPageUrl = (username: string) =>
+  `${INSTAGRAM_URL}/${encodeURIComponent(username)}`;

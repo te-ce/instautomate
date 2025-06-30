@@ -1,10 +1,11 @@
 import assert from "assert";
 import UserAgent from "user-agents";
 import JSONDB, { User } from "./db/db.ts";
-import { shuffleArray, escapeXpathStr, sleep } from "./util/util.ts";
+import { shuffleArray, escapeXpathStr, sleep, getPageJson, getUserPageUrl } from "./util/util.ts";
 import { Navigation } from "./actions/navigation.ts";
 import { Cookies } from "./actions/cookies.ts";
 import { takeScreenshot } from "./actions/screenshot.ts";
+import { INSTAGRAM_URL } from "./util/const.ts";
 
 const botWorkShiftHours = 16;
 const dayMs = 24 * 60 * 60 * 1000;
@@ -19,7 +20,6 @@ class DailyLimitReachedError extends Error {
 
 export const Instauto = async (db, browser, options) => {
   const {
-    instagramBaseUrl = "https://www.instagram.com",
     cookiesPath,
 
     username: myUsernameIn,
@@ -50,9 +50,6 @@ export const Instauto = async (db, browser, options) => {
 
     dryRun = true,
 
-    screenshotOnError = false,
-    screenshotsPath = ".",
-
     logger = console,
   } = options;
 
@@ -82,7 +79,7 @@ export const Instauto = async (db, browser, options) => {
 
   // State
   const page = await browser.newPage();
-  const { gotoUrl, gotoWithRetry, tryPressButton } = Navigation(page);
+  const { gotoUrl, gotoWithRetry, tryPressButton, goHome } = Navigation(page);
   const { tryLoadCookies, trySaveCookies, tryDeleteCookies } = Cookies(browser);
 
   // https://github.com/mifi/SimpleInstaBot/issues/118#issuecomment-1067883091
@@ -96,7 +93,6 @@ export const Instauto = async (db, browser, options) => {
 
   if (enableCookies) await tryLoadCookies();
 
-  const goHome = async () => gotoUrl(`${instagramBaseUrl}/?hl=en`);
 
   async function tryClickLogin() {
     async function tryClickButton(xpath) {
@@ -300,9 +296,6 @@ export const Instauto = async (db, browser, options) => {
     );
   }
 
-  const getUserPageUrl = (username) =>
-    `${instagramBaseUrl}/${encodeURIComponent(username)}`;
-
   function isAlreadyOnUserPage(username) {
     const url = getUserPageUrl(username);
     // optimization: already on URL? (ignore trailing slash)
@@ -453,14 +446,6 @@ export const Instauto = async (db, browser, options) => {
     }
 
     return undefined;
-  }
-
-  async function getPageJson() {
-    return JSON.parse(
-      (await (
-        await (await page.$("pre"))?.getProperty("textContent")
-      )?.jsonValue()) ?? "{}",
-    );
   }
 
   async function isActionBlocked() {
@@ -652,7 +637,7 @@ export const Instauto = async (db, browser, options) => {
     getResponseProp,
     graphqlVariables: graphqlVariablesIn,
   }) {
-    const graphqlUrl = `${instagramBaseUrl}/graphql/query/?query_hash=${queryHash}`;
+    const graphqlUrl = `${INSTAGRAM_URL}/graphql/query/?query_hash=${queryHash}`;
 
     const graphqlVariables = {
       first: 50,
@@ -668,7 +653,7 @@ export const Instauto = async (db, browser, options) => {
       const url = `${graphqlUrl}&variables=${JSON.stringify(graphqlVariables)}`;
 
       await gotoUrl(url);
-      const json = await getPageJson();
+      const json = await getPageJson(page);
 
       const subProp = getResponseProp(json);
       const pageInfo = subProp.page_info;
