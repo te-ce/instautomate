@@ -13,6 +13,6 @@
     "skipLibCheck": true,
     "noEmit": true,
     "baseUrl": ".",
-    "noImplicitAny": false
+    "noImplicitAny": true
   }
 }

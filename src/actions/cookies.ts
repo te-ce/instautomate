@@ -1,7 +1,7 @@
-import { logger } from "src/util/logger";
 import fs from "fs-extra";
 import { Browser } from "puppeteer";
 import settings from "../../settings.json" with { type: "json" };
+import { logger } from "src/util/logger";
 
 export const Cookies = (browser: Browser) => {
   const { cookiesPath } = settings.config;

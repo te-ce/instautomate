@@ -4,20 +4,39 @@ import keyBy from "lodash/keyBy";
 export interface User {
   username: string;
   time: number;
+  href?: string;
   failed?: boolean;
   noActionTaken?: boolean;
+  id?: string;
+  followedByCount?: number;
+  followsCount?: number;
+  isPrivate?: boolean;
+  isVerified?: boolean;
+  isBusinessAccount?: boolean;
+  isProfessionalAccount?: boolean;
+  fullName?: string;
+  biography?: string;
+  profilePicUrlHd?: string;
+  externalUrl?: string;
+  businessCategoryName?: string;
+  categoryName?: string;
 }
 
-export default async ({
+export const JSONDB = async ({
   followedDbPath,
   unfollowedDbPath,
   likedPhotosDbPath,
 
   logger = console,
+}: {
+  followedDbPath: string;
+  unfollowedDbPath: string;
+  likedPhotosDbPath: string;
+  logger?: typeof console;
 }) => {
   let prevFollowedUsers: Record<string, User> = {};
   let prevUnfollowedUsers: Record<string, User> = {};
-  let prevLikedPhotos: { username: string; href: string; time: number }[] = [];
+  let prevLikedPhotos: User[] = [];
 
   async function trySaveDb() {
     try {
@@ -61,60 +80,36 @@ export default async ({
     }
   }
 
-  function getPrevLikedPhotos() {
-    return prevLikedPhotos;
-  }
-
-  function getTotalLikedPhotos() {
-    return getPrevLikedPhotos().length; // TODO performance
-  }
-
-  function getLikedPhotosLastTimeUnit(timeUnit) {
+  function getLikedPhotosLastTimeUnit(timeUnit: number) {
     const now = new Date().getTime();
-    return getPrevLikedPhotos().filter((u) => now - u.time < timeUnit);
+    return prevLikedPhotos.filter((u) => now - u.time < timeUnit);
   }
 
-  async function addLikedPhoto({ username, href, time }) {
+  async function addLikedPhoto({ username, href, time }: User) {
     prevLikedPhotos.push({ username, href, time });
     await trySaveDb();
   }
 
-  function getPrevFollowedUsers() {
-    return Object.values(prevFollowedUsers);
-  }
-
-  function getTotalFollowedUsers() {
-    return getPrevFollowedUsers().length; // TODO performance
-  }
-
-  function getFollowedLastTimeUnit(timeUnit) {
+  function getFollowedLastTimeUnit(timeUnit: number) {
     const now = new Date().getTime();
-    return getPrevFollowedUsers().filter((u) => now - u.time < timeUnit);
+    return Object.values(prevFollowedUsers).filter(
+      (u) => now - u.time < timeUnit,
+    );
   }
 
-  function getPrevFollowedUser(username) {
-    return prevFollowedUsers[username];
-  }
-
-  async function addPrevFollowedUser(user) {
+  async function addPrevFollowedUser(user: User) {
     prevFollowedUsers[user.username] = user;
     await trySaveDb();
   }
 
-  function getPrevUnfollowedUsers() {
-    return Object.values(prevUnfollowedUsers);
-  }
-
-  function getTotalUnfollowedUsers() {
-    return getPrevUnfollowedUsers().length; // TODO performance
-  }
-
-  function getUnfollowedLastTimeUnit(timeUnit) {
+  function getUnfollowedLastTimeUnit(timeUnit: number) {
     const now = new Date().getTime();
-    return getPrevUnfollowedUsers().filter((u) => now - u.time < timeUnit);
+    return Object.values(prevUnfollowedUsers).filter(
+      (u) => now - u.time < timeUnit,
+    );
   }
 
-  async function addPrevUnfollowedUser(user) {
+  async function addPrevUnfollowedUser(user: User) {
     prevUnfollowedUsers[user.username] = user;
     await trySaveDb();
   }
@@ -124,17 +119,13 @@ export default async ({
   return {
     save: trySaveDb,
     addPrevFollowedUser,
-    getPrevFollowedUser,
     addPrevUnfollowedUser,
-    getPrevFollowedUsers,
     getFollowedLastTimeUnit,
-    getPrevUnfollowedUsers,
     getUnfollowedLastTimeUnit,
-    getPrevLikedPhotos,
     getLikedPhotosLastTimeUnit,
     addLikedPhoto,
-    getTotalFollowedUsers,
-    getTotalUnfollowedUsers,
-    getTotalLikedPhotos,
+    prevFollowedUsers,
+    prevUnfollowedUsers,
+    prevLikedPhotos,
   };
 };

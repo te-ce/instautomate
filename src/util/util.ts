@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
-import { logger } from "src/util/logger";
 import { INSTAGRAM_URL } from "./const";
+import { logger } from "./logger";
 
 export function shuffleArray(arrayIn: any[]) {
   const array = [...arrayIn];
@@ -20,9 +20,10 @@ export function escapeXpathStr(str: string) {
   return `concat(${str2})`;
 }
 
-const sleepFixed = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleepFixed = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
-export const sleep = (ms, deviation = 1) => {
+export const sleep = (ms: number, deviation = 1) => {
   const msWithDeviation = (Math.random() * deviation + 1) * ms;
   logger.log("Waiting", (msWithDeviation / 1000).toFixed(2), "sec");
   return sleepFixed(msWithDeviation);

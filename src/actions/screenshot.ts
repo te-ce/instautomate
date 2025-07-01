@@ -1,7 +1,7 @@
 import { Page } from "puppeteer";
-import { logger } from "src/util/logger";
 import { join } from "path";
 import settings from "../../settings.json" with { type: "json" };
+import { logger } from "src/util/logger";
 
 export async function takeScreenshot(page: Page) {
   const { screenshotsPath } = settings.config;

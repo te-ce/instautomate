@@ -4,7 +4,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "npx tsx src/start.ts"
+    "start": "npx tsx src/start.ts",
+    "format": "prettier --write \"src/**/*.{js,ts}\"",
+    "lint": "eslint \"src/**/*.{js,ts}\"",
+    "lint:fix": "eslint \"src/**/*.{js,ts}\" --fix",
+    "typecheck": "tsc --noEmit"
   },
   "author": "",
   "license": "ISC",

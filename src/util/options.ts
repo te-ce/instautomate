@@ -1,5 +1,5 @@
 import settings from "../../settings.json" with { type: "json" };
-import { logger } from "./logger.ts";
+import { logger } from "./logger.js";
 
 export const options = {
   cookiesPath: settings.config.cookiesPath ?? "./cookies.json",
