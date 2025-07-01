@@ -299,8 +299,6 @@ export const Instauto = async (db, browser) => {
 
   async function navigateToUser(username) {
     if (isAlreadyOnUserPage(username)) return true;
-
-    // logger.log('navigating from', page.url(), 'to', url);
     logger.log(`Navigating to user ${username}`);
 
     const url = getUserPageUrl(username);
@@ -311,7 +309,6 @@ export const Instauto = async (db, browser) => {
     }
 
     if (status === 200) {
-      // logger.log('Page returned 200 ☑️');
       // some pages return 200 but nothing there (I think deleted accounts)
       // https://github.com/mifi/SimpleInstaBot/issues/48
       // example: https://www.instagram.com/victorialarson__/

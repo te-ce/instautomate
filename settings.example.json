@@ -6,7 +6,6 @@
   "config": {
     "dryRun": false,
     "headless": true,
-    "unfollowAfterDays": 7,
     "maxFollowsPerHour": 15,
     "maxFollowsPerDay": 150,
     "maxLikesPerDay": 30,
@@ -14,7 +13,7 @@
     "shouldLikeMedia": false,
     "enableLikeImages": false,
     "likeImagesMax": 3,
-    "skipPrivate": true,
+    "unfollowAfterDays": 7,
     "cookiesPath": "./cookies.json",
     "screenshotsPath": "."
   },
