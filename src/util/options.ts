@@ -96,13 +96,21 @@ export type Options = z.infer<typeof OptionsSchema>;
 export const getOptions = async (): Promise<Options> => {
   const basePath = "./config";
   const args = process.argv.slice(2);
-  const configName = args[0] ?? "default";
+  const env = args[0] ?? "default";
+  const password = args[1] ?? "";
 
-  const optionsPath = path.join(basePath, configName, "options.ts");
+  const optionsPath = path.join(basePath, env, "options.ts");
+  const cookiesPath = path.join(basePath, env, "cookies.json");
+
+  if (password === "" && !fs.existsSync(cookiesPath)) {
+    throw new Error(
+      `No password provided and no cookies found. Restart process with password as second argument. For example: "npm run start ${env} MyPassword"`,
+    );
+  }
 
   try {
     if (!fs.existsSync(optionsPath)) {
-      if (configName !== "default") {
+      if (env !== "default") {
         throw new Error(
           `Configuration file not found: ${optionsPath}. Please create the configuration file first.`,
         );
@@ -118,11 +126,12 @@ export const getOptions = async (): Promise<Options> => {
 
     const optionsWithPaths = {
       ...options,
-      cookiesPath: path.join(basePath, configName, "cookies.json"),
-      followedDbPath: path.join(basePath, configName, "followed.json"),
-      unfollowedDbPath: path.join(basePath, configName, "unfollowed.json"),
-      likedPhotosDbPath: path.join(basePath, configName, "liked-photos.json"),
-      screenshotsPath: path.join(basePath, configName, "screenshots"),
+      password,
+      cookiesPath: path.join(basePath, env, "cookies.json"),
+      followedDbPath: path.join(basePath, env, "followed.json"),
+      unfollowedDbPath: path.join(basePath, env, "unfollowed.json"),
+      likedPhotosDbPath: path.join(basePath, env, "liked-photos.json"),
+      screenshotsPath: path.join(basePath, env, "screenshots"),
     };
 
     return OptionsSchema.parse(optionsWithPaths);

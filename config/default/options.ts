@@ -8,10 +8,10 @@ export const options: Omit<
   | "unfollowedDbPath"
   | "likedPhotosDbPath"
   | "screenshotsPath"
+  | "password"
 > = {
   headless: false,
   username: "your_username",
-  password: "your_password",
 
   enableCookies: true,
   randomizeUserAgent: true,

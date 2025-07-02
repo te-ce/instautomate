@@ -7,7 +7,8 @@ Main goal here is to migrate to latest tooling (updated Puppeteer, eslint, prett
 - Install Node 23.6.0 or higher
 - Install dependencies `npm install`
 - Either use the [default config](config/default/options.ts) and fill out the credentials and/or adjust the other options as needed. Or duplicate the [default folder](config/default) and name it `config/your-config-name`.
-- Run the bot with `npm run start` or `npm run start your-config-name`.
+- First start needs to be run with password as second argument. For example: `npm run start default MyPassword`.
+  - Else run the bot with `npm run start` or `npm run start your-config-name`.
 - This is also how you can have different accounts and configs and run them in parallel.
 
 Your instagram account should be set to english.
