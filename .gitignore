@@ -66,3 +66,8 @@ package-lock.json
 /lib/
 config.json
 settings.json
+cookies.json
+followed.json
+following.json
+unfollowed.json
+liked-photos.json

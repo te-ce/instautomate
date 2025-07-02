@@ -341,27 +341,27 @@ export const Instauto = async (
     async function getUserDataFromPage() {
       // https://github.com/mifi/instauto/issues/115#issuecomment-1199335650
       // to test in browser: document.getElementsByTagName('html')[0].innerHTML.split('\n');
-      // try {
-      //   const body = await page.content();
-      //   for (let q of body.split(/\r?\n/)) {
-      //     if (q.includes("edge_followed_by")) {
-      //       q = q.split(",[],[")[1];
+      try {
+        const body = await page.content();
+        for (let q of body.split(/\r?\n/) as any) {
+          if (q.includes("edge_followed_by")) {
+            q = q.split(",[],[")[1];
 
-      //       q = q.split("]]]")[0];
-      //       q = JSON.parse(q);
+            q = q.split("]]]")[0];
+            q = JSON.parse(q);
 
-      //       q = q.data.__bbox.result.response;
-      //       q = q.replace(/\\/g, "");
-      //       q = JSON.parse(q);
-      //       return q.data.user;
-      //     }
-      //   }
-      // } catch (err) {
-      //   logger.warn(
-      //     `Unable to get user data from page (${username}) - This is normal`,
-      //     err,
-      //   );
-      // }
+            q = q.data.__bbox.result.response;
+            q = q.replace(/\\/g, "");
+            q = JSON.parse(q);
+            return q.data.user;
+          }
+        }
+      } catch (err) {
+        logger.warn(
+          `Unable to get user data from page (${username}) - This is normal`,
+          err,
+        );
+      }
       return undefined;
     }
 
