@@ -1,10 +1,10 @@
 import fs from "fs-extra";
 import { Browser } from "puppeteer";
-import settings from "../../settings.json" with { type: "json" };
-import { logger } from "src/util/logger";
+import { logger } from "../util/logger";
+import { getOptions } from "../util/options";
 
-export const Cookies = (browser: Browser) => {
-  const { cookiesPath } = settings.config;
+export const Cookies = async (browser: Browser) => {
+  const { cookiesPath } = await getOptions();
 
   async function tryLoadCookies() {
     try {

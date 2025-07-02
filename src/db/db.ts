@@ -1,5 +1,6 @@
 import fs from "fs-extra";
 import keyBy from "lodash/keyBy";
+import { getOptions } from "../util/options";
 
 export interface User {
   username: string;
@@ -22,18 +23,9 @@ export interface User {
   categoryName?: string;
 }
 
-export const JSONDB = async ({
-  followedDbPath,
-  unfollowedDbPath,
-  likedPhotosDbPath,
-
-  logger = console,
-}: {
-  followedDbPath: string;
-  unfollowedDbPath: string;
-  likedPhotosDbPath: string;
-  logger?: typeof console;
-}) => {
+export const JSONDB = async () => {
+  const options = await getOptions();
+  const { logger } = options;
   let prevFollowedUsers: Record<string, User> = {};
   let prevUnfollowedUsers: Record<string, User> = {};
   let prevLikedPhotos: User[] = [];
@@ -41,14 +33,17 @@ export const JSONDB = async ({
   async function trySaveDb() {
     try {
       await fs.writeFile(
-        followedDbPath,
+        options.followedDbPath,
         JSON.stringify(Object.values(prevFollowedUsers)),
       );
       await fs.writeFile(
-        unfollowedDbPath,
+        options.unfollowedDbPath,
         JSON.stringify(Object.values(prevUnfollowedUsers)),
       );
-      await fs.writeFile(likedPhotosDbPath, JSON.stringify(prevLikedPhotos));
+      await fs.writeFile(
+        options.likedPhotosDbPath,
+        JSON.stringify(prevLikedPhotos),
+      );
     } catch (err) {
       logger.error("Failed to save database", err);
     }
@@ -57,7 +52,7 @@ export const JSONDB = async ({
   async function tryLoadDb() {
     try {
       prevFollowedUsers = keyBy(
-        JSON.parse(await fs.readFile(followedDbPath, "utf8")),
+        JSON.parse(await fs.readFile(options.followedDbPath, "utf8")),
         "username",
       );
     } catch (err) {
@@ -65,7 +60,7 @@ export const JSONDB = async ({
     }
     try {
       prevUnfollowedUsers = keyBy(
-        JSON.parse(await fs.readFile(unfollowedDbPath, "utf8")),
+        JSON.parse(await fs.readFile(options.unfollowedDbPath, "utf8")),
         "username",
       );
     } catch (err) {
@@ -73,7 +68,7 @@ export const JSONDB = async ({
     }
     try {
       prevLikedPhotos = JSON.parse(
-        await fs.readFile(likedPhotosDbPath, "utf8"),
+        await fs.readFile(options.likedPhotosDbPath, "utf8"),
       );
     } catch (err) {
       logger.warn("No likes database found", err);

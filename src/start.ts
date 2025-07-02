@@ -1,18 +1,19 @@
-import settings from "../settings.json" with { type: "json" };
 import puppeteer from "puppeteer";
 
 import { Instauto } from "./bot.ts";
-import { options } from "./util/options.ts";
+import { getOptions } from "./util/options.ts";
 
 (async () => {
   let browser;
+
+  const options = await getOptions();
 
   try {
     browser = await puppeteer.launch({
       executablePath: process.env.IS_RUNNING_ON_DOCKER
         ? "/usr/bin/chromium"
         : undefined,
-      headless: settings.config.headless,
+      headless: options.headless,
 
       args: [
         // Needed for docker
@@ -33,14 +34,7 @@ import { options } from "./util/options.ts";
     });
 
     // Create a database where state will be loaded/saved to
-    const instautoDb = await Instauto.JSONDB({
-      // Will store a list of all users that have been followed before, to prevent future re-following.
-      followedDbPath: "./followed.json",
-      // Will store all unfollowed users here
-      unfollowedDbPath: "./unfollowed.json",
-      // Will store all likes here
-      likedPhotosDbPath: "./liked-photos.json",
-    });
+    const instautoDb = await Instauto.JSONDB();
 
     const instauto = await Instauto(instautoDb, browser);
 
@@ -54,22 +48,22 @@ import { options } from "./util/options.ts";
     // after a certain amount of days (2 weeks)
     // Leave room to do following after this too (unfollow 2/3 of maxFollowsPerDay)
     const unfollowedCount = await instauto.unfollowOldFollowed({
-      ageInDays: settings.config.unfollowAfterDays ?? 14,
+      ageInDays: options.unfollowAfterDays,
       limit: options.maxFollowsPerDay * (4 / 3),
     });
 
     if (unfollowedCount > 0) await instauto.sleep(10 * 60 * 1000);
 
     // List of usernames that we should follow the followers of, can be celebrities etc.
-    const usersToFollowFollowersOf = settings.usersToFollowFollowersOf ?? [];
+    const usersToFollowFollowersOf = options.usersToFollowFollowersOf;
 
     // Now go through each of these and follow a certain amount of their followers
     await instauto.followUsersFollowers({
       usersToFollowFollowersOf,
       maxFollowsTotal: options.maxFollowsPerDay - unfollowedCount,
-      skipPrivate: settings.config.skipPrivate ?? true,
-      enableLikeImages: settings.config.enableLikeImages ?? false,
-      likeImagesMax: settings.config.likeImagesMax ?? 3,
+      skipPrivate: options.skipPrivate,
+      enableLikeImages: options.enableLikeImages,
+      likeImagesMax: options.maxLikesPerDay,
     });
 
     await instauto.sleep(10 * 60 * 1000);

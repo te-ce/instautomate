@@ -6,15 +6,15 @@ Main goal here is to migrate to latest tooling (updated Puppeteer, eslint, prett
 
 - Install Node 23.6.0 or higher
 - Install dependencies `npm install`
-- Make a copy of [settings.example.json](settings.example.json) and name it `.settings.json` and fill it with your credentials. Adjust other settings as needed.
-- Run the bot with `npm run start`
+- Either use the [default config](config/default/options.ts) and fill out the credentials and/or adjust the other options as needed. Or duplicate the [default folder](config/default) and name it `config/your-config-name`.
+- Run the bot with `npm run start` or `npm run start your-config-name`.
+- This is also how you can have different accounts and configs and run them in parallel.
 
 Your instagram account should be set to english.
 
 # Roadmap
 
 - refactor codebase into smaller files
-- Add support for multiple accounts
 - Find a way to scrap data without instagram blocking us (I guess it is the getting the user data from the page)
 - Fix running puppeteer with chromium or firefox (`page.goto()` timeout after the initialization)
 
@@ -24,10 +24,19 @@ Your instagram account should be set to english.
 - Unfollow users that don't follow us back. Will not unfollow any users that we recently followed.
 - Unfollow auto followed users (also those following us back) after a certain number of days.
 - The code automatically prevents breaching 100 follow/unfollows per hour or 700 per 24hr, to prevent bans. This can be configured.
+- Have different configs for different accounts and run them in parallel.
 
 # Tips
 
 Run this on a machine with a non-cloud IP to avoid being banned
+
+# FAQ
+
+- How to run the bot with a different config?
+  - Duplicate the [default folder](config/default) and name it `config/your-config-name`.
+  - Adjust the options in the `options.ts` file.
+  - Run the bot with `npm run start your-config-name`.
+  - This is also how you can have different accounts and configs and run them in parallel.
 
 # Troubleshooting
 

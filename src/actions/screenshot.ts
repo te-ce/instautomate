@@ -1,10 +1,10 @@
 import { Page } from "puppeteer";
 import { join } from "path";
-import settings from "../../settings.json" with { type: "json" };
-import { logger } from "src/util/logger";
+import { logger } from "../util/logger";
+import { getOptions } from "../util/options";
 
 export async function takeScreenshot(page: Page) {
-  const { screenshotsPath } = settings.config;
+  const { screenshotsPath } = await getOptions();
 
   try {
     const fileName = `${new Date().getTime()}.jpg`;

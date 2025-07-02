@@ -1,75 +1,133 @@
-import settings from "../../settings.json" with { type: "json" };
 import { logger } from "./logger.js";
+import fs from "fs";
+import path from "path";
+import { z } from "zod";
 
-export const options = {
-  cookiesPath: settings.config.cookiesPath ?? "./cookies.json",
+const OptionsSchema = z.object({
+  headless: z.boolean().describe("Headless mode"),
+  cookiesPath: z.string().describe("Path to the cookies file"),
+  username: z.string().describe("Username"),
+  password: z.string().describe("Password"),
+  enableCookies: z.boolean().describe("Enable cookies"),
+  randomizeUserAgent: z.boolean().describe("Randomize user agent"),
+  skipPrivate: z.boolean().describe("Skip private accounts"),
+  enableLikeImages: z.boolean().describe("Enable liking images"),
+  maxFollowsPerHour: z
+    .number()
+    .describe(
+      "Global limit that prevents follow or unfollows (total) to exceed this number over a sliding window of one hour",
+    ),
+  maxFollowsPerDay: z
+    .number()
+    .describe(
+      "Global limit that prevents follow or unfollows (total) to exceed this number over a sliding window of one day:",
+    ),
+  maxLikesPerDay: z
+    .number()
+    .describe(
+      "Global limit that prevents likes to exceed this number over a sliding window of one day",
+    ),
+  followUserRatioMin: z
+    .number()
+    .describe(
+      "Don't follow users that have a followers / following ratio less than this",
+    ),
+  followUserRatioMax: z
+    .number()
+    .describe(
+      "Don't follow users that have a followers / following ratio higher than this",
+    ),
+  followUserWithMaxFollowers: z
+    .number()
+    .nullable()
+    .describe("Don't follow users who have more followers than this"),
+  followUserWithMaxFollowing: z
+    .number()
+    .nullable()
+    .describe(
+      "Don't follow users who have more people following them than this",
+    ),
+  followUserWithMinFollowers: z
+    .number()
+    .nullable()
+    .describe("Don't follow users who have less followers than this"),
+  followUserWithMinFollowing: z
+    .number()
+    .nullable()
+    .describe(
+      "Don't follow users who have less people following them than this",
+    ),
+  followUserFilterFn: z
+    .function()
+    .nullable()
+    .describe("Custom logic filter for user follow"),
+  likeMediaFilterFn: z
+    .function()
+    .nullable()
+    .describe("Custom logic filter for media like"),
+  usersToFollowFollowersOf: z
+    .array(z.string())
+    .describe("Usernames of the users to follow the followers of"),
+  unfollowAfterDays: z
+    .number()
+    .describe(
+      "Unfollow users that don't follow us back after this number of days",
+    ),
+  dontUnfollowUntilTimeElapsed: z
+    .number()
+    .describe(
+      "This specifies the time during which the bot should not touch users that it has previously followed (in milliseconds)",
+    ),
+  excludeUsers: z
+    .array(z.string())
+    .describe(
+      "Usernames that we should not touch, e.g. your friends and actual followings",
+    ),
+  dryRun: z.boolean().describe("If true, will not do any actions"),
+  logger: z.any().describe("Logger"),
+  followedDbPath: z.string().describe("Followed database path"),
+  unfollowedDbPath: z.string().describe("Unfollowed database path"),
+  likedPhotosDbPath: z.string().describe("Liked photos database path"),
+  screenshotsPath: z.string().describe("Screenshots path"),
+});
 
-  username: settings.login.name ?? "",
-  password: settings.login.password ?? "",
+export type Options = z.infer<typeof OptionsSchema>;
 
-  enableCookies: true,
-  randomizeUserAgent: true,
+export const getOptions = async (): Promise<Options> => {
+  const basePath = "./config";
+  const args = process.argv.slice(2);
+  const configName = args[0] ?? "default";
 
-  // Global limit that prevents follow or unfollows (total) to exceed this number over a sliding window of one hour:
-  maxFollowsPerHour: settings.config.maxFollowsPerHour ?? 20,
-  // Global limit that prevents follow or unfollows (total) to exceed this number over a sliding window of one day:
-  maxFollowsPerDay: settings.config.maxFollowsPerHour ?? 150,
-  // (NOTE setting the above parameters too high will cause temp ban/throttle)
+  const optionsPath = path.join(basePath, configName, "options.ts");
 
-  maxLikesPerDay: settings.config.maxLikesPerDay ?? 30,
-
-  // Don't follow users that have a followers / following ratio less than this:
-  followUserRatioMin:
-    process.env.FOLLOW_USER_RATIO_MIN != null
-      ? parseFloat(process.env.FOLLOW_USER_RATIO_MIN)
-      : 0.2,
-  // Don't follow users that have a followers / following ratio higher than this:
-  followUserRatioMax:
-    process.env.FOLLOW_USER_RATIO_MAX != null
-      ? parseFloat(process.env.FOLLOW_USER_RATIO_MAX)
-      : 4.0,
-  // Don't follow users who have more followers than this:
-  followUserMaxFollowers: null,
-  // Don't follow users who have more people following them than this:
-  followUserMaxFollowing: null,
-  // Don't follow users who have less followers than this:
-  followUserMinFollowers: settings.config.followUserMinFollowers ?? null,
-  // Don't follow users who have more people following them than this:
-  followUserMinFollowing: null,
-
-  // Custom logic filter for user follow
-  shouldFollowUser: null as ((data: any) => boolean) | null,
-  /* Example to skip bussiness accounts
-  shouldFollowUser: function (data) {
-    console.log('isBusinessAccount:', data.isBusinessAccount);
-    return !data.isBusinessAccount;
-  }, */
-  /* Example to skip accounts with 'crypto' & 'bitcoin' in their bio or username
-  shouldFollowUser: function (data) {
-    console.log('username:', data.username, 'biography:', data.biography);
-    var keywords = ['crypto', 'bitcoin'];
-    if (keywords.find(v => data.username.includes(v)) !== undefined || keywords.find(v => data.biography.includes(v)) !== undefined) {
-      return false;
+  try {
+    if (!fs.existsSync(optionsPath)) {
+      if (configName !== "default") {
+        throw new Error(
+          `Configuration file not found: ${optionsPath}. Please create the configuration file first.`,
+        );
+      } else {
+        throw new Error(
+          `Default configuration file not found: ${optionsPath}. Please create the default configuration file first.`,
+        );
+      }
     }
-    return true;
-  }, */
 
-  // Custom logic filter for liking media
-  shouldLikeMedia:
-    settings.config.shouldLikeMedia ??
-    (null as ((data: any) => boolean) | null),
+    const optionsModule = await import(optionsPath);
+    const options = optionsModule.options;
 
-  // NOTE: The dontUnfollowUntilTimeElapsed option is ONLY for the unfollowNonMutualFollowers function
-  // This specifies the time during which the bot should not touch users that it has previously followed (in milliseconds)
-  // After this time has passed, it will be able to unfollow them again.
-  // TODO should remove this option from here
-  dontUnfollowUntilTimeElapsed: 3 * 24 * 60 * 60 * 1000,
+    const optionsWithPaths = {
+      ...options,
+      cookiesPath: path.join(basePath, configName, "cookies.json"),
+      followedDbPath: path.join(basePath, configName, "followed.json"),
+      unfollowedDbPath: path.join(basePath, configName, "unfollowed.json"),
+      likedPhotosDbPath: path.join(basePath, configName, "liked-photos.json"),
+      screenshotsPath: path.join(basePath, configName, "screenshots"),
+    };
 
-  // Usernames that we should not touch, e.g. your friends and actual followings
-  excludeUsers: [] as string[],
-
-  // If true, will not do any actions (defaults to true)
-  dryRun: settings.config.dryRun,
-
-  logger,
+    return OptionsSchema.parse(optionsWithPaths);
+  } catch (error) {
+    logger.error(`Error loading options from ${optionsPath}:`, error);
+    throw error;
+  }
 };

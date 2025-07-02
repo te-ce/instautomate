@@ -12,8 +12,8 @@ import { Navigation } from "./actions/navigation.ts";
 import { Cookies } from "./actions/cookies.ts";
 import { takeScreenshot } from "./actions/screenshot.ts";
 import { INSTAGRAM_URL } from "./util/const.ts";
-import { options } from "./util/options.ts";
 import { Browser } from "puppeteer";
+import { getOptions } from "./util/options.ts";
 
 const botWorkShiftHours = 16;
 const dayMs = 24 * 60 * 60 * 1000;
@@ -41,21 +41,22 @@ export const Instauto = async (
     maxLikesPerDay,
     followUserRatioMin,
     followUserRatioMax,
-    followUserMaxFollowers,
-    followUserMaxFollowing,
-    followUserMinFollowers,
-    followUserMinFollowing,
-    shouldFollowUser,
-    shouldLikeMedia,
+    followUserWithMaxFollowers,
+    followUserWithMaxFollowing,
+    followUserWithMinFollowers,
+    followUserWithMinFollowing,
+    followUserFilterFn,
+    likeMediaFilterFn,
     dontUnfollowUntilTimeElapsed,
     excludeUsers,
     dryRun,
-  } = options;
+  } = await getOptions();
   let myUsername = username;
   const userDataCache: Record<string, User> = {};
   const page = await browser.newPage();
   const { gotoUrl, gotoWithRetry, tryPressButton, goHome } = Navigation(page);
-  const { tryLoadCookies, trySaveCookies, tryDeleteCookies } = Cookies(browser);
+  const { tryLoadCookies, trySaveCookies, tryDeleteCookies } =
+    await Cookies(browser);
   const {
     getLikedPhotosLastTimeUnit,
     addLikedPhoto,
@@ -898,7 +899,7 @@ export const Instauto = async (
       dryRun: dryRun,
       likeImagesMin,
       likeImagesMax,
-      shouldLikeMedia: shouldLikeMedia,
+      shouldLikeMedia: likeMediaFilterFn,
     });
   }
 
@@ -938,13 +939,14 @@ export const Instauto = async (
       return false;
     }
     if (
-      (followUserMaxFollowers != null &&
-        followedByCount > followUserMaxFollowers) ||
-      (followUserMaxFollowing != null &&
-        followsCount > followUserMaxFollowing) ||
-      (followUserMinFollowers != null &&
-        followedByCount < followUserMinFollowers) ||
-      (followUserMinFollowing != null && followsCount < followUserMinFollowing)
+      (followUserWithMaxFollowers != null &&
+        followedByCount > followUserWithMaxFollowers) ||
+      (followUserWithMaxFollowing != null &&
+        followsCount > followUserWithMaxFollowing) ||
+      (followUserWithMinFollowers != null &&
+        followedByCount < followUserWithMinFollowers) ||
+      (followUserWithMinFollowing != null &&
+        followsCount < followUserWithMinFollowing)
     ) {
       logger.log(
         "User has too many or too few followers or following, skipping.",
@@ -965,9 +967,9 @@ export const Instauto = async (
       return false;
     }
     if (
-      shouldFollowUser !== null &&
-      typeof shouldFollowUser === "function" &&
-      !shouldFollowUser({
+      followUserFilterFn !== null &&
+      typeof followUserFilterFn === "function" &&
+      !followUserFilterFn({
         username,
         isVerified,
         isBusinessAccount,
@@ -1181,7 +1183,7 @@ export const Instauto = async (
 
                 if (j % 10 === 0) {
                   logger.log(
-                    "Have unfollowed 10 users since last break, pausing 10 min"
+                    "Have unfollowed 10 users since last break, pausing 10 min",
                   );
                   await sleep(10 * 60 * 1000, 0.1);
                 }
