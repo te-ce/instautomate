@@ -1,6 +1,6 @@
 import assert from "assert";
 import UserAgent from "user-agents";
-import { JSONDB, User } from "./db/db.ts";
+import { JSONDB } from "./db/db.ts";
 import {
   shuffleArray,
   escapeXpathStr,
@@ -14,6 +14,7 @@ import { takeScreenshot } from "./actions/screenshot.ts";
 import { INSTAGRAM_URL } from "./util/const.ts";
 import { Browser } from "puppeteer";
 import { getOptions } from "./util/options.ts";
+import { User } from "./util/types.ts";
 
 const botWorkShiftHours = 16;
 const dayMs = 24 * 60 * 60 * 1000;

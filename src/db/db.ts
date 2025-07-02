@@ -1,27 +1,7 @@
 import fs from "fs-extra";
 import keyBy from "lodash/keyBy";
+import { User } from "src/util/types";
 import { getOptions } from "../util/options";
-
-export interface User {
-  username: string;
-  time: number;
-  href?: string;
-  failed?: boolean;
-  noActionTaken?: boolean;
-  id?: string;
-  followedByCount?: number;
-  followsCount?: number;
-  isPrivate?: boolean;
-  isVerified?: boolean;
-  isBusinessAccount?: boolean;
-  isProfessionalAccount?: boolean;
-  fullName?: string;
-  biography?: string;
-  profilePicUrlHd?: string;
-  externalUrl?: string;
-  businessCategoryName?: string;
-  categoryName?: string;
-}
 
 export const JSONDB = async () => {
   const options = await getOptions();
