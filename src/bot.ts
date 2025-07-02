@@ -1141,7 +1141,7 @@ export const Instauto = async (
 
   // TODO: Type correctly
   async function safelyUnfollowUserList(
-    usersToUnfollow: any,
+    usersToUnfollow: AsyncGenerator<any[], string[], unknown>,
     limit: number,
     condition: (username: string) => Promise<boolean>,
   ) {
@@ -1150,7 +1150,7 @@ export const Instauto = async (
     let i = 0; // Number of people processed
     let j = 0; // Number of people actually unfollowed (button pressed)
 
-    for (const listOrUsername of usersToUnfollow) {
+    for await (const listOrUsername of usersToUnfollow) {
       // backward compatible:
       const list = Array.isArray(listOrUsername)
         ? listOrUsername
@@ -1181,7 +1181,7 @@ export const Instauto = async (
 
                 if (j % 10 === 0) {
                   logger.log(
-                    "Have unfollowed 10 users since last break, pausing 10 min",
+                    "Have unfollowed 10 users since last break, pausing 10 min"
                   );
                   await sleep(10 * 60 * 1000, 0.1);
                 }
