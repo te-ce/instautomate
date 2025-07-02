@@ -238,7 +238,8 @@ export const Instauto = async (
       db.getFollowedLastTimeUnit(timeUnit).length +
       db
         .getUnfollowedLastTimeUnit(timeUnit)
-        .filter((u) => !u.noActionTaken && now - u.time < timeUnit).length
+        .filter((user) => !user.noActionTaken && now - user.time < timeUnit)
+        .length
     );
   }
 
@@ -1142,7 +1143,6 @@ export const Instauto = async (
     }
   }
 
-  // TODO: Type correctly
   async function safelyUnfollowUserList(
     usersToUnfollow: AsyncGenerator<any[], string[], unknown>,
     limit: number,
@@ -1150,8 +1150,8 @@ export const Instauto = async (
   ) {
     logger.log("Unfollowing users, up to limit", limit);
 
-    let i = 0; // Number of people processed
-    let j = 0; // Number of people actually unfollowed (button pressed)
+    let peopleProcessed = 0;
+    let peopleUnfollowed = 0;
 
     for await (const listOrUsername of usersToUnfollow) {
       // backward compatible:
@@ -1180,9 +1180,9 @@ export const Instauto = async (
                 await sleep(3000);
               } else {
                 await sleep(15000);
-                j += 1;
+                peopleUnfollowed += 1;
 
-                if (j % 10 === 0) {
+                if (peopleUnfollowed % 10 === 0) {
                   logger.log(
                     "Have unfollowed 10 users since last break, pausing 10 min",
                   );
@@ -1191,12 +1191,14 @@ export const Instauto = async (
               }
             }
 
-            i += 1;
-            logger.log(`Have now unfollowed (or tried to unfollow) ${i} users`);
+            peopleProcessed += 1;
+            logger.log(
+              `Have now unfollowed (or tried to unfollow) ${peopleProcessed} users`,
+            );
 
-            if (limit && j >= limit) {
+            if (limit && peopleUnfollowed >= limit) {
               logger.log(`Have unfollowed limit of ${limit}, stopping`);
-              return j;
+              return peopleUnfollowed;
             }
 
             await throttle();
@@ -1207,9 +1209,9 @@ export const Instauto = async (
       }
     }
 
-    logger.log("Done with unfollowing", i, j);
+    logger.log("Done with unfollowing", peopleProcessed, peopleUnfollowed);
 
-    return j;
+    return peopleUnfollowed;
   }
 
   async function safelyFollowUserList({

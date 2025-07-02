@@ -1,5 +1,5 @@
 import { logger } from "src/util/logger";
-import { Options } from "src/util/options";
+import { Options } from "src/util/types";
 
 export const options: Omit<
   Options,
@@ -16,8 +16,8 @@ export const options: Omit<
   enableCookies: true,
   randomizeUserAgent: true,
 
-  maxFollowsPerHour: 20,
-  maxFollowsPerDay: 150,
+  maxFollowsPerHour: 10,
+  maxFollowsPerDay: 50,
   maxLikesPerDay: 30,
   skipPrivate: true,
   enableLikeImages: false,
