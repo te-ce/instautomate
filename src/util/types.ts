@@ -109,3 +109,11 @@ export interface User {
   businessCategoryName?: string;
   categoryName?: string;
 }
+
+export type Media = {
+  mediaType: string;
+  mediaDesc: string;
+  src: string;
+  alt: string;
+  poster: string;
+};

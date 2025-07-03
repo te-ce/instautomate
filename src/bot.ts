@@ -8,15 +8,15 @@ import {
   getUserPageUrl,
 } from "./util/util.ts";
 import { Navigation } from "./actions/navigation.ts";
-import { Cookies } from "./actions/cookies.ts";
 import { takeScreenshot } from "./actions/screenshot.ts";
 import { BOT_WORK_SHIFT_HOURS, INSTAGRAM_URL } from "./util/const.ts";
 import { Browser } from "puppeteer";
 import { getOptions } from "./util/options.ts";
-import { User } from "./util/types.ts";
+import { Media, User } from "./util/types.ts";
 import { logger } from "./util/logger.ts";
 import { throttle } from "./actions/limit.ts";
 import { startup } from "./actions/startup.ts";
+import { checkActionBlocked } from "./util/status.ts";
 
 export const Instauto = async (db: JsonDB, browser: Browser) => {
   const options = await getOptions();
@@ -39,7 +39,6 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
   const userDataCache: Record<string, User> = {};
   const page = await browser.newPage();
   const { gotoUrl, gotoWithRetry } = Navigation(page);
-  const { tryDeleteCookies } = await Cookies(browser);
   const { addLikedPhoto, addPrevFollowedUser, addPrevUnfollowedUser } = db;
 
   assert(
@@ -250,29 +249,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     return isPrivate.length > 0;
   }
 
-  async function isActionBlocked() {
-    if (
-      (await page.$$('xpath///*[contains(text(), "Action Blocked")]')).length >
-      0
-    )
-      return true;
-    if (
-      (await page.$$('xpath///*[contains(text(), "Try Again Later")]')).length >
-      0
-    )
-      return true;
-    return false;
-  }
 
-  async function checkActionBlocked() {
-    if (await isActionBlocked()) {
-      const hours = 3;
-      logger.error(`Action Blocked, waiting ${hours} hours...`);
-      await tryDeleteCookies();
-      await sleep(hours * 60 * 60 * 1000);
-      throw new Error("Aborted operation due to action blocked");
-    }
-  }
 
   // How to test xpaths in the browser:
   // document.evaluate("your xpath", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null ).singleNodeValue
@@ -368,7 +345,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       await elementHandle.click();
       await sleep(5000);
 
-      await checkActionBlocked();
+      await checkActionBlocked(page, browser);
 
       const elementHandle2 = await findUnfollowButton();
 
@@ -417,7 +394,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
 
         await sleep(5000);
 
-        await checkActionBlocked();
+        await checkActionBlocked(page, browser);
 
         const elementHandle2 = await findFollowButton();
         if (!elementHandle2)
@@ -524,13 +501,6 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     });
   }
 
-  type Media = {
-    mediaType: string;
-    mediaDesc: string;
-    src: string;
-    alt: string;
-    poster: string;
-  };
   async function likeCurrentUserImagesPageCode({
     dryRun: dryRunIn,
     likeImagesMin,
