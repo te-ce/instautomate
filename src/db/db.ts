@@ -2,10 +2,12 @@ import fs from "fs-extra";
 import keyBy from "lodash/keyBy";
 import { User } from "src/util/types";
 import { getOptions } from "../util/options";
+import { logger } from "src/util/logger";
 
-export const JSONDB = async () => {
+export type JsonDB = Awaited<ReturnType<typeof jsonDb>>;
+
+export const jsonDb = async () => {
   const options = await getOptions();
-  const { logger } = options;
   let prevFollowedUsers: Record<string, User> = {};
   let prevUnfollowedUsers: Record<string, User> = {};
   let prevLikedPhotos: User[] = [];
@@ -89,6 +91,17 @@ export const JSONDB = async () => {
     await trySaveDb();
   }
 
+  function getNumFollowedUsersThisTimeUnit(timeUnit: number) {
+    const now = new Date().getTime();
+
+    return (
+      getFollowedLastTimeUnit(timeUnit).length +
+      getUnfollowedLastTimeUnit(timeUnit).filter(
+        (user) => !user.noActionTaken && now - user.time < timeUnit,
+      ).length
+    );
+  }
+
   await tryLoadDb();
 
   return {
@@ -102,5 +115,6 @@ export const JSONDB = async () => {
     prevFollowedUsers,
     prevUnfollowedUsers,
     prevLikedPhotos,
+    getNumFollowedUsersThisTimeUnit,
   };
 };

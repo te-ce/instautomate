@@ -1,6 +1,6 @@
 import assert from "assert";
 import UserAgent from "user-agents";
-import { JSONDB } from "./db/db.ts";
+import { JsonDB } from "./db/db.ts";
 import {
   shuffleArray,
   escapeXpathStr,
@@ -11,27 +11,19 @@ import {
 import { Navigation } from "./actions/navigation.ts";
 import { Cookies } from "./actions/cookies.ts";
 import { takeScreenshot } from "./actions/screenshot.ts";
-import { INSTAGRAM_URL } from "./util/const.ts";
+import {
+  BOT_WORK_SHIFT_HOURS,
+  DAY_IN_MS,
+  HOUR_IN_MS,
+  INSTAGRAM_URL,
+} from "./util/const.ts";
 import { Browser } from "puppeteer";
 import { getOptions } from "./util/options.ts";
 import { User } from "./util/types.ts";
 import { logger } from "./util/logger.ts";
+import { throttle } from "./actions/limit.ts";
 
-const botWorkShiftHours = 16;
-const dayMs = 24 * 60 * 60 * 1000;
-const hourMs = 60 * 60 * 1000;
-
-class DailyLimitReachedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "DailyLimitReachedError";
-  }
-}
-
-export const Instauto = async (
-  db: Awaited<ReturnType<typeof JSONDB>>,
-  browser: Browser,
-) => {
+export const Instauto = async (db: JsonDB, browser: Browser) => {
   const {
     username,
     password,
@@ -39,7 +31,6 @@ export const Instauto = async (
     randomizeUserAgent,
     maxFollowsPerHour,
     maxFollowsPerDay,
-    maxLikesPerDay,
     followUserRatioMin,
     followUserRatioMax,
     followUserWithMaxFollowers,
@@ -63,15 +54,13 @@ export const Instauto = async (
     addLikedPhoto,
     addPrevFollowedUser,
     addPrevUnfollowedUser,
+    getNumFollowedUsersThisTimeUnit,
   } = db;
 
   assert(
-    maxFollowsPerHour * botWorkShiftHours >= maxFollowsPerDay,
+    maxFollowsPerHour * BOT_WORK_SHIFT_HOURS >= maxFollowsPerDay,
     "Max follows per hour too low compared to max follows per day",
   );
-
-  const getNumLikesThisTimeUnit = (time: number) =>
-    getLikedPhotosLastTimeUnit(time).length;
 
   // https://github.com/mifi/SimpleInstaBot/issues/118#issuecomment-1067883091
   await page.setExtraHTTPHeaders({ "Accept-Language": "en" });
@@ -200,13 +189,13 @@ export const Instauto = async (
   await trySaveCookies();
 
   logger.log(
-    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(hourMs)} in the last hour`,
+    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(HOUR_IN_MS)} in the last hour`,
   );
   logger.log(
-    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(dayMs)} in the last 24 hours`,
+    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(DAY_IN_MS)} in the last 24 hours`,
   );
   logger.log(
-    `Have liked ${getNumLikesThisTimeUnit(dayMs)} images in the last 24 hours`,
+    `Have liked ${getLikedPhotosLastTimeUnit(DAY_IN_MS).length} images in the last 24 hours`,
   );
 
   try {
@@ -229,55 +218,6 @@ export const Instauto = async (
     href,
   }: Pick<User, "username" | "href">) {
     await addLikedPhoto({ username, href, time: new Date().getTime() });
-  }
-
-  function getNumFollowedUsersThisTimeUnit(timeUnit: number) {
-    const now = new Date().getTime();
-
-    return (
-      db.getFollowedLastTimeUnit(timeUnit).length +
-      db
-        .getUnfollowedLastTimeUnit(timeUnit)
-        .filter((user) => !user.noActionTaken && now - user.time < timeUnit)
-        .length
-    );
-  }
-
-  async function checkReachedFollowedUserDayLimit() {
-    const currentFollowCount = getNumFollowedUsersThisTimeUnit(dayMs);
-    logger.log(
-      `Followed ${currentFollowCount}/${maxFollowsPerDay} daily users`,
-    );
-
-    if (currentFollowCount >= maxFollowsPerDay) {
-      throw new DailyLimitReachedError(
-        `Daily follow limit reached: ${currentFollowCount}/${maxFollowsPerDay}`,
-      );
-    }
-  }
-
-  async function checkReachedFollowedUserHourLimit() {
-    if (getNumFollowedUsersThisTimeUnit(hourMs) >= maxFollowsPerHour) {
-      logger.log("Have reached hourly follow rate limit, pausing 10 min");
-      await sleep(10 * 60 * 1000);
-    }
-  }
-
-  async function checkReachedLikedUserDayLimit() {
-    const currentLikesCount = getNumLikesThisTimeUnit(dayMs);
-    logger.log(`Liked ${currentLikesCount}/${maxLikesPerDay} daily pictures`);
-
-    if (currentLikesCount >= maxLikesPerDay) {
-      throw new DailyLimitReachedError(
-        `Daily like limit reached: ${currentLikesCount}/${maxLikesPerDay}`,
-      );
-    }
-  }
-
-  async function throttle() {
-    await checkReachedFollowedUserDayLimit();
-    await checkReachedFollowedUserHourLimit();
-    await checkReachedLikedUserDayLimit();
   }
 
   function haveRecentlyFollowedUser(username: string) {
@@ -1031,7 +971,7 @@ export const Instauto = async (
     await followUser(username);
 
     await sleep(30000);
-    await throttle();
+    await throttle(db);
 
     return true;
   }
@@ -1063,7 +1003,7 @@ export const Instauto = async (
         `Liking images of up to ${likeImagesMax} followers of ${username}`,
       );
 
-    await throttle();
+    await throttle(db);
 
     let numFollowedForThisUser = 0;
 
@@ -1078,7 +1018,7 @@ export const Instauto = async (
       logger.log("User followers batch", followersBatch);
 
       for (const follower of followersBatch) {
-        await throttle();
+        await throttle(db);
 
         try {
           if (enableFollow && numFollowedForThisUser >= maxFollowsPerUser) {
@@ -1164,7 +1104,7 @@ export const Instauto = async (
         });
 
         await sleep(10 * 60 * 1000);
-        await throttle();
+        await throttle(db);
       } catch (err) {
         if (err instanceof Error && err.name === "DailyLimitReachedError") {
           logger.log("Daily limit reached, stopping:", err.message);
@@ -1239,7 +1179,7 @@ export const Instauto = async (
               return peopleUnfollowed;
             }
 
-            await throttle();
+            await throttle(db);
           } catch (err) {
             logger.error("Failed to unfollow, continuing with next", err);
           }
@@ -1264,7 +1204,7 @@ export const Instauto = async (
     logger.log("Following users, up to limit", limit);
 
     for (const username of users) {
-      await throttle();
+      await throttle(db);
 
       try {
         await followUserRespectingRestrictions({ username, skipPrivate });
