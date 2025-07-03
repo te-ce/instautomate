@@ -536,15 +536,17 @@ export const Instauto = async (
 
   async function followUser(username: string) {
     await navigateToUserAndGetData(username);
+    const unfollowButton = await findUnfollowButton();
+
+    if (unfollowButton) {
+      logger.log("We are already following this user");
+      await sleep(5000);
+      return;
+    }
+
     const elementHandle = await findFollowButton();
 
     if (!elementHandle) {
-      if (await findUnfollowButton()) {
-        logger.log("We are already following this user");
-        await sleep(5000);
-        return;
-      }
-
       throw new Error("Follow button not found");
     }
 
