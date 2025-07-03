@@ -34,7 +34,7 @@ import { getOptions } from "./util/options.ts";
     });
 
     // Create a database where state will be loaded/saved to
-    const instautoDb = await Instauto.JSONDB();
+    const instautoDb = await Instauto.jsonDb();
 
     const instauto = await Instauto(instautoDb, browser);
 

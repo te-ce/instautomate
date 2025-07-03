@@ -1,6 +1,5 @@
 import assert from "assert";
-import UserAgent from "user-agents";
-import { JsonDB } from "./db/db.ts";
+import { jsonDb, JsonDB } from "./db/db.ts";
 import {
   shuffleArray,
   escapeXpathStr,
@@ -11,24 +10,18 @@ import {
 import { Navigation } from "./actions/navigation.ts";
 import { Cookies } from "./actions/cookies.ts";
 import { takeScreenshot } from "./actions/screenshot.ts";
-import {
-  BOT_WORK_SHIFT_HOURS,
-  DAY_IN_MS,
-  HOUR_IN_MS,
-  INSTAGRAM_URL,
-} from "./util/const.ts";
+import { BOT_WORK_SHIFT_HOURS, INSTAGRAM_URL } from "./util/const.ts";
 import { Browser } from "puppeteer";
 import { getOptions } from "./util/options.ts";
 import { User } from "./util/types.ts";
 import { logger } from "./util/logger.ts";
 import { throttle } from "./actions/limit.ts";
+import { startup } from "./actions/startup.ts";
 
 export const Instauto = async (db: JsonDB, browser: Browser) => {
+  const options = await getOptions();
   const {
     username,
-    password,
-    enableCookies,
-    randomizeUserAgent,
     maxFollowsPerHour,
     maxFollowsPerDay,
     followUserRatioMin,
@@ -42,176 +35,21 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     dontUnfollowUntilTimeElapsed,
     excludeUsers,
     dryRun,
-  } = await getOptions();
-  let myUsername = username;
+  } = options;
   const userDataCache: Record<string, User> = {};
   const page = await browser.newPage();
-  const { gotoUrl, gotoWithRetry, tryPressButton, goHome } = Navigation(page);
-  const { tryLoadCookies, trySaveCookies, tryDeleteCookies } =
-    await Cookies(browser);
-  const {
-    getLikedPhotosLastTimeUnit,
-    addLikedPhoto,
-    addPrevFollowedUser,
-    addPrevUnfollowedUser,
-    getNumFollowedUsersThisTimeUnit,
-  } = db;
+  const { gotoUrl, gotoWithRetry } = Navigation(page);
+  const { tryDeleteCookies } = await Cookies(browser);
+  const { addLikedPhoto, addPrevFollowedUser, addPrevUnfollowedUser } = db;
 
   assert(
     maxFollowsPerHour * BOT_WORK_SHIFT_HOURS >= maxFollowsPerDay,
     "Max follows per hour too low compared to max follows per day",
   );
 
-  // https://github.com/mifi/SimpleInstaBot/issues/118#issuecomment-1067883091
-  await page.setExtraHTTPHeaders({ "Accept-Language": "en" });
+  await startup(page, browser, options, db);
 
-  if (randomizeUserAgent) {
-    const userAgentGenerated = new UserAgent({ deviceCategory: "desktop" });
-    await page.setUserAgent(userAgentGenerated.toString());
-  }
-
-  if (enableCookies) await tryLoadCookies();
-
-  async function tryClickLogin() {
-    async function tryClickButton(xpath: string) {
-      const btn = (await page.$$(`xpath/${xpath}`))[0];
-      if (!btn) return false;
-      await btn.click();
-      return true;
-    }
-
-    if (await tryClickButton("//button[.//text() = 'Log In']")) return true;
-    if (await tryClickButton("//button[.//text() = 'Log in']")) return true; // https://github.com/mifi/instauto/pull/110 https://github.com/mifi/instauto/issues/109
-    return false;
-  }
-
-  await goHome();
-  await sleep(1000);
-
-  await tryPressButton(
-    await page.$$('xpath///button[contains(text(), "Allow all cookies")]'),
-    "Accept cookies dialog",
-  );
-  await tryPressButton(
-    await page.$$('xpath///button[contains(text(), "Accept")]'),
-    "Accept cookies dialog",
-  );
-  await tryPressButton(
-    await page.$$(
-      'xpath///button[contains(text(), "Only allow essential cookies")]',
-    ),
-    "Accept cookies dialog 2 button 1",
-    10000,
-  );
-  await tryPressButton(
-    await page.$$(
-      'xpath///button[contains(text(), "Allow essential and optional cookies")]',
-    ),
-    "Accept cookies dialog 2 button 2",
-    10000,
-  );
-
-  if (!(await isLoggedIn())) {
-    if (!myUsername || !password) {
-      await tryDeleteCookies();
-      throw new Error(
-        "No longer logged in. Deleting cookies and aborting. Need to provide username/password",
-      );
-    }
-
-    try {
-      await page.click('a[href="/accounts/login/?source=auth_switcher"]');
-      await sleep(1000);
-    } catch (err) {
-      logger.info("No login page button, assuming we are on login form", err);
-    }
-
-    // Mobile version https://github.com/mifi/SimpleInstaBot/issues/7
-    await tryPressButton(
-      await page.$$('xpath///button[contains(text(), "Log In")]'),
-      "Login form button",
-    );
-
-    await page.type('input[name="username"]', myUsername, { delay: 50 });
-    await sleep(1000);
-    await page.type('input[name="password"]', password, { delay: 50 });
-    await sleep(1000);
-
-    for (;;) {
-      const didClickLogin = await tryClickLogin();
-      if (didClickLogin) break;
-      logger.warn(
-        "Login button not found. Maybe you can help me click it? And also report an issue on github with a screenshot of what you're seeing :)",
-      );
-      await sleep(6000);
-    }
-
-    await sleep(10000);
-
-    // Sometimes login button gets stuck with a spinner
-    // https://github.com/mifi/SimpleInstaBot/issues/25
-    if (!(await isLoggedIn())) {
-      logger.log("Still not logged in, trying to reload loading page");
-      await page.reload();
-      await sleep(5000);
-    }
-
-    let warnedAboutLoginFail = false;
-    while (!(await isLoggedIn())) {
-      if (!warnedAboutLoginFail)
-        logger.warn(
-          'WARNING: Login has not succeeded. This could be because of an incorrect username/password, or a "suspicious login attempt"-message. You need to manually complete the process, or if really logged in, click the Instagram logo in the top left to go to the Home page.',
-        );
-      warnedAboutLoginFail = true;
-      await sleep(5000);
-    }
-
-    await goHome();
-    await sleep(1000);
-
-    // Mobile version https://github.com/mifi/SimpleInstaBot/issues/7
-    await tryPressButton(
-      await page.$$('xpath///button[contains(text(), "Save Info")]'),
-      "Login info dialog: Save Info",
-    );
-    // May sometimes be "Save info" too? https://github.com/mifi/instauto/pull/70
-    await tryPressButton(
-      await page.$$('xpath///button[contains(text(), "Save info")]'),
-      "Login info dialog: Save info",
-    );
-  }
-
-  await tryPressButton(
-    await page.$$('xpath///button[contains(text(), "Not Now")]'),
-    "Turn on Notifications dialog",
-  );
-
-  await trySaveCookies();
-
-  logger.log(
-    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(HOUR_IN_MS)} in the last hour`,
-  );
-  logger.log(
-    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(DAY_IN_MS)} in the last 24 hours`,
-  );
-  logger.log(
-    `Have liked ${getLikedPhotosLastTimeUnit(DAY_IN_MS).length} images in the last 24 hours`,
-  );
-
-  try {
-    const detectedUsername = await page.evaluate(
-      () => (window as any)._sharedData.config.viewer.username,
-    );
-    if (detectedUsername) myUsername = detectedUsername;
-  } catch (err) {
-    logger.error("Failed to detect username", err);
-  }
-
-  if (!myUsername) {
-    throw new Error("Don't know what's my username");
-  }
-
-  const myUserId = await navigateToUserAndGetProfileId(myUsername);
+  const myUserId = await navigateToUserAndGetProfileId(username);
 
   async function onImageLiked({
     username,
@@ -592,10 +430,6 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     await sleep(1000);
 
     return res;
-  }
-
-  async function isLoggedIn() {
-    return (await page.$$('xpath///*[@aria-label="Home"]')).length === 1;
   }
 
   async function* graphqlQueryUsers({
@@ -1248,7 +1082,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       if (users.length < 2) throw new Error("Unable to find user follows list");
       return users.some(
         (user: { pk: string; username: string }) =>
-          String(user.pk) === String(myUserId) || user.username === myUsername,
+          String(user.pk) === String(myUserId) || user.username === username,
       ); // If they follow us, we will show at the top of the list
     } catch (err) {
       logger.error("Failed to check if user follows us", err);
@@ -1359,6 +1193,6 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
   };
 };
 
-Instauto.JSONDB = JSONDB;
+Instauto.jsonDb = jsonDb;
 
 export default Instauto;
