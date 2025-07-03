@@ -15,6 +15,7 @@ import { INSTAGRAM_URL } from "./util/const.ts";
 import { Browser } from "puppeteer";
 import { getOptions } from "./util/options.ts";
 import { User } from "./util/types.ts";
+import { logger } from "./util/logger.ts";
 
 const botWorkShiftHours = 16;
 const dayMs = 24 * 60 * 60 * 1000;
@@ -32,7 +33,6 @@ export const Instauto = async (
   browser: Browser,
 ) => {
   const {
-    logger,
     username,
     password,
     enableCookies,
@@ -222,7 +222,7 @@ export const Instauto = async (
     throw new Error("Don't know what's my username");
   }
 
-  const { id: myUserId } = await navigateToUserAndGetData(myUsername);
+  const myUserId = await navigateToUserAndGetProfileId(myUsername);
 
   async function onImageLiked({
     username,
@@ -327,6 +327,32 @@ export const Instauto = async (
     if (!(await navigateToUser(username))) throw new Error("User not found");
   }
 
+  async function navigateToUserAndGetProfileIdFromHtml(username: string) {
+    await navigateToUser(username);
+
+    const profileId = await page.evaluate(() => {
+      const content = document.body.innerHTML;
+      const regex = /"profile_id":"(\d+)"/;
+      const match = RegExp(regex).exec(content);
+      return match ? match[1] : null;
+    });
+
+    logger.log(`Got profile id ${profileId} for user ${username}`);
+    return profileId;
+  }
+
+  async function navigateToUserAndGetProfileId(username: string) {
+    let id: string | null | undefined = null;
+    id = await navigateToUserAndGetProfileIdFromHtml(username);
+
+    if (!id) {
+      const user = await navigateToUserAndGetData(username);
+      id = user.id;
+    }
+
+    return id;
+  }
+
   async function navigateToUserAndGetData(username: string): Promise<User> {
     const cachedUserData = userDataCache[username];
 
@@ -384,12 +410,12 @@ export const Instauto = async (
                 headers: { "x-ig-app-id": "936619743392459" },
               },
             );
-            await response.json(); // else it will not finish the request
+            await response.json();
           }, username);
           // todo `https://i.instagram.com/api/v1/users/${userId}/info/`
           // https://www.javafixing.com/2022/07/fixed-can-get-instagram-profile-picture.html?m=1
         } catch (err) {
-          logger.error("Failed to manually send request", err);
+          logger.error("Failed to manually send request: ", err);
         }
       }, 5000);
 
@@ -436,6 +462,14 @@ export const Instauto = async (
     }
 
     return { username, time: new Date().getTime(), href: "" };
+  }
+
+  async function isUserPrivate() {
+    const isPrivate = await page.$$(
+      `xpath///body//main//*[contains(text(),${escapeXpathStr("This account is private")})]`,
+    );
+
+    return isPrivate.length > 0;
   }
 
   async function isActionBlocked() {
@@ -936,9 +970,11 @@ export const Instauto = async (
       categoryName = "",
     } = graphqlUser;
 
+    const isPrivate2 = await isUserPrivate();
+
     const ratio = followedByCount / (followsCount || 1);
 
-    if (isPrivate && skipPrivate) {
+    if (isPrivate || (isPrivate2 && skipPrivate)) {
       logger.log("User is private, skipping");
       return false;
     }
@@ -1031,7 +1067,7 @@ export const Instauto = async (
 
     let numFollowedForThisUser = 0;
 
-    const { id: userId } = await navigateToUserAndGetData(username);
+    const userId = await navigateToUserAndGetProfileId(username);
 
     if (!userId) throw new Error("User ID not found");
 
@@ -1247,7 +1283,7 @@ export const Instauto = async (
   async function doesUserFollowMe(username: string) {
     try {
       logger.info("Checking if user", username, "follows us");
-      const { id: userId } = await navigateToUserAndGetData(username);
+      const userId = await navigateToUserAndGetProfileId(username);
 
       const elementHandles = await page.$$(
         "xpath///a[contains(.,' following')][contains(@href,'/following')]",
@@ -1266,7 +1302,6 @@ export const Instauto = async (
           );
         }),
         elementHandles[0].click(),
-        // page.waitForNavigation({ waitUntil: 'networkidle0' }),
       ]);
 
       const { users } = JSON.parse(await foundResponse.text());

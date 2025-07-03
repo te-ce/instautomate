@@ -38,6 +38,4 @@ export const options: Omit<
   usersToFollowFollowersOf: [""],
   excludeUsers: [""],
   dryRun: false,
-
-  logger: logger,
 };

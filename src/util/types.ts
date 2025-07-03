@@ -81,7 +81,6 @@ export const OptionsSchema = z.object({
       "Usernames that we should not touch, e.g. your friends and actual followings",
     ),
   dryRun: z.boolean().describe("If true, will not do any actions"),
-  logger: z.any().describe("Logger"),
   followedDbPath: z.string().describe("Followed database path"),
   unfollowedDbPath: z.string().describe("Unfollowed database path"),
   likedPhotosDbPath: z.string().describe("Liked photos database path"),
