@@ -49,7 +49,7 @@ import { getOptions } from "./util/options.ts";
     // Leave room to do following after this too (unfollow 2/3 of maxFollowsPerDay)
     const unfollowedCount = await instauto.unfollowOldFollowed({
       ageInDays: options.unfollowAfterDays,
-      limit: options.maxFollowsPerDay * (4 / 3),
+      limit: Math.floor(options.maxFollowsPerDay * (4 / 3)),
     });
 
     if (unfollowedCount > 0) await instauto.sleep(10 * 60 * 1000);
