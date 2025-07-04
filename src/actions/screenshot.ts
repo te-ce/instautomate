@@ -5,7 +5,11 @@ import { getOptions } from "../util/options";
 import fs from "fs";
 
 export async function takeScreenshot(page: Page) {
-  const { screenshotsPath } = await getOptions();
+  const { screenshotsPath, enableTakingScreenshots } = await getOptions();
+
+  if (!enableTakingScreenshots) {
+    return;
+  }
 
   try {
     const fileName = `${new Date().toString()}.jpg`;

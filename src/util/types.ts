@@ -9,6 +9,10 @@ export const OptionsSchema = z.object({
   randomizeUserAgent: z.boolean().describe("Randomize user agent"),
   skipPrivate: z.boolean().describe("Skip private accounts"),
   enableLikeImages: z.boolean().describe("Enable liking images"),
+  enableTakingScreenshots: z
+    .boolean()
+    .nullish()
+    .describe("Enable taking screenshots"),
   maxFollowsPerHour: z
     .number()
     .describe(

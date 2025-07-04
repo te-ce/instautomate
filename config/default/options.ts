@@ -1,4 +1,3 @@
-import { logger } from "src/util/logger";
 import { Options } from "src/util/types";
 
 export const options: Omit<

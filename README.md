@@ -17,6 +17,7 @@ Your instagram account should be set to english.
 
 - refactor codebase into smaller files
 - Fix reading user data (get it from html data instead of api)
+- Fix taking screenshots
 - Silently follow users (follow and mute stories and posts)
 - Find a way to scrap data without instagram blocking us (I guess it is the getting the user data from the page)
 - Fix running puppeteer with chromium or firefox (`page.goto()` timeout after the initialization)
