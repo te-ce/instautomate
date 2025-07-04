@@ -1,0 +1,46 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  lint_typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check if branch is main
+        id: branch
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            echo "::set-output name=is_main::true"
+          else
+            echo "::set-output name=is_main::false"
+          fi
+
+      - name: Cancel Previous Runs
+        if: steps.branch.outputs.is_main != 'true'
+        uses: styfle/cancel-workflow-action@0.11.0
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23.6.0
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
