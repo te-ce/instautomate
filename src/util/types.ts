@@ -26,11 +26,13 @@ export const OptionsSchema = z.object({
     ),
   followUserRatioMin: z
     .number()
+    .nullable()
     .describe(
       "Don't follow users that have a followers / following ratio less than this",
     ),
   followUserRatioMax: z
     .number()
+    .nullable()
     .describe(
       "Don't follow users that have a followers / following ratio higher than this",
     ),

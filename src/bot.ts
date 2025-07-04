@@ -249,8 +249,6 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     return isPrivate.length > 0;
   }
 
-
-
   // How to test xpaths in the browser:
   // document.evaluate("your xpath", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null ).singleNodeValue
   async function findButtonWithText(text: string) {
