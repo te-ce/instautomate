@@ -102,18 +102,9 @@ export interface User {
   failed?: boolean;
   noActionTaken?: boolean;
   id?: string;
-  followedByCount?: number;
+  followerCount?: number;
   followsCount?: number;
   isPrivate?: boolean;
-  isVerified?: boolean;
-  isBusinessAccount?: boolean;
-  isProfessionalAccount?: boolean;
-  fullName?: string;
-  biography?: string;
-  profilePicUrlHd?: string;
-  externalUrl?: string;
-  businessCategoryName?: string;
-  categoryName?: string;
 }
 
 export type Media = {

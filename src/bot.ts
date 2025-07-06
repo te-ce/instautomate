@@ -171,68 +171,68 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       return undefined;
     }
 
+    // TODO: this is not working and most likely triggers some instagram violation
     // intercept special XHR network request that fetches user's data and store it in a cache
     // TODO fallback to DOM to get user ID if this request fails?
     // https://github.com/mifi/SimpleInstaBot/issues/125#issuecomment-1145354294
-    async function getUserDataFromInterceptedRequest() {
-      const t = setTimeout(async () => {
-        logger.log("Unable to intercept request, will send manually");
-        try {
-          await page.evaluate(async (username2) => {
-            const response = await window.fetch(
-              `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username2.toLowerCase())}`,
-              {
-                mode: "cors",
-                credentials: "include",
-                headers: { "x-ig-app-id": "936619743392459" },
-              },
-            );
-            await response.json();
-          }, username);
-          // todo `https://i.instagram.com/api/v1/users/${userId}/info/`
-          // https://www.javafixing.com/2022/07/fixed-can-get-instagram-profile-picture.html?m=1
-        } catch (err) {
-          logger.error("Failed to manually send request: ", err);
-        }
-      }, 5000);
+    // logger.log("Need to intercept network request to get user data");
+    // async function getUserDataFromInterceptedRequest() {
+    //   const t = setTimeout(async () => {
+    //     logger.log("Unable to intercept request, will send manually");
+    //     try {
+    //       await page.evaluate(async (username2) => {
+    //         const response = await window.fetch(
+    //           `https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username2.toLowerCase())}`,
+    //           {
+    //             mode: "cors",
+    //             credentials: "include",
+    //             headers: { "x-ig-app-id": "936619743392459" },
+    //           },
+    //         );
+    //         await response.json();
+    //       }, username);
+    //       // todo `https://i.instagram.com/api/v1/users/${userId}/info/`
+    //       // https://www.javafixing.com/2022/07/fixed-can-get-instagram-profile-picture.html?m=1
+    //     } catch (err) {
+    //       logger.error("Failed to manually send request: ", err);
+    //     }
+    //   }, 5000);
 
-      try {
-        const [foundResponse] = await Promise.all([
-          page.waitForResponse(
-            (response) => {
-              const request = response.request();
-              return (
-                request.method() === "GET" &&
-                new RegExp(
-                  `https:\\/\\/i\\.instagram\\.com\\/api\\/v1\\/users\\/web_profile_info\\/\\?username=${encodeURIComponent(username.toLowerCase())}`,
-                ).test(request.url())
-              );
-            },
-            { timeout: 30000 },
-          ),
-          navigateToUserWithCheck(username),
-        ]);
+    //   try {
+    //     const [foundResponse] = await Promise.all([
+    //       page.waitForResponse(
+    //         (response) => {
+    //           const request = response.request();
+    //           return (
+    //             request.method() === "GET" &&
+    //             new RegExp(
+    //               `https:\\/\\/i\\.instagram\\.com\\/api\\/v1\\/users\\/web_profile_info\\/\\?username=${encodeURIComponent(username.toLowerCase())}`,
+    //             ).test(request.url())
+    //           );
+    //         },
+    //         { timeout: 30000 },
+    //       ),
+    //       navigateToUserWithCheck(username),
+    //     ]);
 
-        const json = JSON.parse(await foundResponse.text());
-        return json.data.user;
-      } finally {
-        clearTimeout(t);
-      }
-    }
+    //     const json = JSON.parse(await foundResponse.text());
+    //     return json.data.user;
+    //   } finally {
+    //     clearTimeout(t);
+    //   }
+    // }
 
     logger.log("Trying to get user data from HTML");
 
     await navigateToUserWithCheck(username);
-    let userData = await getUserDataFromPage();
+    const userData = await getUserDataFromPage();
     if (userData) {
       userDataCache[username] = userData;
       return userData;
     }
 
-    logger.log("Need to intercept network request to get user data");
-
     // works for old accounts only:
-    userData = await getUserDataFromInterceptedRequest();
+    // userData = await getUserDataFromInterceptedRequest();
     if (userData) {
       userDataCache[username] = userData;
       return userData;
@@ -247,6 +247,54 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     );
 
     return isPrivate.length > 0;
+  }
+
+  async function toggleUserSilentMode(username: string) {
+    await navigateToUser(username);
+
+    const unfollowButton = await findUnfollowButton();
+    const followButton = await findFollowButton();
+
+    if (!unfollowButton && followButton) {
+      logger.log("We are not following user, can't set silent");
+      return;
+    }
+
+    if (!unfollowButton && !followButton) {
+      logger.log(
+        "Can't find unfollow/follow button, are you already on the user page?",
+      );
+      return;
+    }
+
+    const muteSectionButton = await page.$$(
+      `xpath///div[contains(text(), 'Mute')]/parent::div`,
+    );
+
+    if (muteSectionButton.length === 0) {
+      logger.log("Can't find mute section button");
+      return;
+    }
+
+    await muteSectionButton[0].click();
+    await sleep(1000);
+
+    const mutePostsButton = await page.$$(
+      `xpath///div[contains(text(), 'Posts')]/parent::div`,
+    );
+    const muteStoriesButton = await page.$$(
+      `xpath///div[contains(text(), 'Stories')]/parent::div`,
+    );
+
+    if (mutePostsButton.length > 0 && muteStoriesButton.length > 0) {
+      logger.log("muting posts and stories");
+      await mutePostsButton[0].click();
+      await sleep(1000);
+      await muteStoriesButton[0].click();
+      await sleep(1000);
+    } else {
+      logger.log("Can't find mute posts/stories button");
+    }
   }
 
   // How to test xpaths in the browser:
@@ -331,29 +379,31 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       return;
     }
 
-    const elementHandle = await findFollowButton();
+    const followButton = await findFollowButton();
 
-    if (!elementHandle) {
+    if (!followButton) {
       throw new Error("Follow button not found");
     }
 
     logger.log(`Following user ${username}`);
 
     if (!dryRun) {
-      await elementHandle.click();
+      await followButton.click();
       await sleep(5000);
 
       await checkActionBlocked(page, browser);
 
-      const elementHandle2 = await findUnfollowButton();
+      const unfollowButton = await findUnfollowButton();
 
       // Don't want to retry this user over and over in case there is an issue https://github.com/mifi/instauto/issues/33#issuecomment-723217177
       const entry: User = { username, time: new Date().getTime(), href: "" };
-      if (!elementHandle2) entry.failed = true;
+      if (!unfollowButton) entry.failed = true;
 
       await addPrevFollowedUser(entry);
 
-      if (!elementHandle2) {
+      await toggleUserSilentMode(username);
+
+      if (!unfollowButton) {
         logger.log("Button did not change state - Sleeping 1 min");
         await sleep(60000);
         throw new Error("Button did not change state");
@@ -369,7 +419,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     await navigateToUserAndGetData(username);
     logger.log(`Unfollowing user ${username}`);
 
-    const res: User = { username, time: new Date().getTime(), href: "" };
+    const res: User = { username, time: new Date().getTime() };
 
     const elementHandle = await findUnfollowButton();
     if (!elementHandle) {
@@ -698,23 +748,14 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     const graphqlUser = await navigateToUserAndGetData(username);
 
     const {
-      followedByCount = 0,
+      followerCount = 0,
       followsCount = 0,
       isPrivate = false,
-      isVerified = false,
-      isBusinessAccount = false,
-      isProfessionalAccount = false,
-      fullName = "",
-      biography = "",
-      profilePicUrlHd = "",
-      externalUrl = "",
-      businessCategoryName = "",
-      categoryName = "",
     } = graphqlUser;
 
     const isPrivate2 = await isUserPrivate();
 
-    const ratio = followedByCount / (followsCount || 1);
+    const ratio = followerCount / (followsCount || 1);
 
     if (isPrivate || (isPrivate2 && skipPrivate)) {
       logger.log("User is private, skipping");
@@ -722,18 +763,18 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     }
     if (
       (followUserWithMaxFollowers != null &&
-        followedByCount > followUserWithMaxFollowers) ||
+        followerCount > followUserWithMaxFollowers) ||
       (followUserWithMaxFollowing != null &&
         followsCount > followUserWithMaxFollowing) ||
       (followUserWithMinFollowers != null &&
-        followedByCount < followUserWithMinFollowers) ||
+        followerCount < followUserWithMinFollowers) ||
       (followUserWithMinFollowing != null &&
         followsCount < followUserWithMinFollowing)
     ) {
       logger.log(
         "User has too many or too few followers or following, skipping.",
         "followedByCount:",
-        followedByCount,
+        followerCount,
         "followsCount:",
         followsCount,
       );
@@ -753,15 +794,6 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       typeof followUserFilterFn === "function" &&
       !followUserFilterFn({
         username,
-        isVerified,
-        isBusinessAccount,
-        isProfessionalAccount,
-        fullName,
-        biography,
-        profilePicUrlHd,
-        externalUrl,
-        businessCategoryName,
-        categoryName,
       }) === true
     ) {
       logger.log(
