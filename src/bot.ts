@@ -1,12 +1,6 @@
 import assert from "assert";
 import { jsonDb, JsonDB } from "./db/db.ts";
-import {
-  shuffleArray,
-  escapeXpathStr,
-  sleep,
-  getPageJson,
-  getUserPageUrl,
-} from "./util/util.ts";
+import { shuffleArray, sleep, getPageJson } from "./util/util.ts";
 import { Navigation } from "./actions/navigation.ts";
 import { takeScreenshot } from "./actions/screenshot.ts";
 import { BOT_WORK_SHIFT_HOURS, INSTAGRAM_URL } from "./util/const.ts";
@@ -16,7 +10,11 @@ import { Media, User } from "./util/types.ts";
 import { logger } from "./util/logger.ts";
 import { throttle } from "./actions/limit.ts";
 import { startup } from "./actions/startup.ts";
-import { checkActionBlocked } from "./util/status.ts";
+import {
+  checkActionBlocked,
+  isAlreadyOnUserPage,
+  isUserPrivate,
+} from "./util/status.ts";
 
 export const Instauto = async (db: JsonDB, browser: Browser) => {
   const options = await getOptions();
@@ -38,7 +36,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
   } = options;
   const userDataCache: Record<string, User> = {};
   const page = await browser.newPage();
-  const { gotoUrl, gotoWithRetry } = Navigation(page);
+  const { gotoUrl, navigateToUser } = Navigation(page);
   const { addLikedPhoto, addPrevFollowedUser, addPrevUnfollowedUser } = db;
 
   assert(
@@ -64,40 +62,6 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       new Date().getTime() - followedUserEntry.time <
       dontUnfollowUntilTimeElapsed
     );
-  }
-
-  function isAlreadyOnUserPage(username: string) {
-    const url = getUserPageUrl(username);
-    // optimization: already on URL? (ignore trailing slash)
-    return page.url().replace(/\/$/, "") === url.replace(/\/$/, "");
-  }
-
-  async function navigateToUser(username: string) {
-    if (isAlreadyOnUserPage(username)) return true;
-    logger.log(`Navigating to user ${username}`);
-
-    const url = getUserPageUrl(username);
-    const status = await gotoWithRetry(url);
-    if (status === 404) {
-      logger.warn("User page returned 404");
-      return false;
-    }
-
-    if (status === 200) {
-      // some pages return 200 but nothing there (I think deleted accounts)
-      // https://github.com/mifi/SimpleInstaBot/issues/48
-      // example: https://www.instagram.com/victorialarson__/
-      // so we check if the page has the user's name on it
-      const elementHandles = await page.$$(
-        `xpath///body//main//*[contains(text(),${escapeXpathStr(username)})]`,
-      );
-      const foundUsernameOnPage = elementHandles.length > 0;
-      if (!foundUsernameOnPage)
-        logger.warn(`Cannot find text "${username}" on page`);
-      return foundUsernameOnPage;
-    }
-
-    throw new Error(`Navigate to user failed with status ${status}`);
   }
 
   async function navigateToUserWithCheck(username: string) {
@@ -133,7 +97,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
   async function navigateToUserAndGetData(username: string): Promise<User> {
     const cachedUserData = userDataCache[username];
 
-    if (isAlreadyOnUserPage(username)) {
+    if (isAlreadyOnUserPage(page, username)) {
       // assume we have data
       return cachedUserData;
     }
@@ -239,14 +203,6 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     }
 
     return { username, time: new Date().getTime(), href: "" };
-  }
-
-  async function isUserPrivate() {
-    const isPrivate = await page.$$(
-      `xpath///body//main//*[contains(text(),${escapeXpathStr("This account is private")})]`,
-    );
-
-    return isPrivate.length > 0;
   }
 
   async function toggleUserSilentMode(username: string) {
@@ -753,7 +709,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       isPrivate = false,
     } = graphqlUser;
 
-    const isPrivate2 = await isUserPrivate();
+    const isPrivate2 = await isUserPrivate(page);
 
     const ratio = followerCount / (followsCount || 1);
 

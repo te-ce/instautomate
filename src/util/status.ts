@@ -1,7 +1,7 @@
 import { Browser, Page } from "puppeteer";
 import { Cookies } from "src/actions/cookies";
 import { logger } from "./logger";
-import { sleep } from "./util";
+import { escapeXpathStr, getUserPageUrl, sleep } from "./util";
 
 export async function isLoggedIn(page: Page) {
   return (await page.$$('xpath///*[@aria-label="Home"]')).length === 1;
@@ -28,4 +28,18 @@ export async function checkActionBlocked(page: Page, browser: Browser) {
     await sleep(hours * 60 * 60 * 1000);
     throw new Error("Aborted operation due to action blocked");
   }
+}
+
+export function isAlreadyOnUserPage(page: Page, username: string) {
+  const url = getUserPageUrl(username);
+  // optimization: already on URL? (ignore trailing slash)
+  return page.url().replace(/\/$/, "") === url.replace(/\/$/, "");
+}
+
+export async function isUserPrivate(page: Page) {
+  const isPrivate = await page.$$(
+    `xpath///body//main//*[contains(text(),${escapeXpathStr("This account is private")})]`,
+  );
+
+  return isPrivate.length > 0;
 }

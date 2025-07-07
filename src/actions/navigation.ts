@@ -1,7 +1,8 @@
 import { ElementHandle, Page } from "puppeteer";
 import { INSTAGRAM_URL } from "src/util/const";
 import { logger } from "src/util/logger";
-import { sleep } from "src/util/util";
+import { isAlreadyOnUserPage } from "src/util/status";
+import { escapeXpathStr, getUserPageUrl, sleep } from "src/util/util";
 
 export const Navigation = (page: Page) => {
   async function tryPressButton(
@@ -56,10 +57,40 @@ export const Navigation = (page: Page) => {
     }
   }
 
+
+  async function navigateToUser(username: string) {
+    if (isAlreadyOnUserPage(page, username)) return true;
+    logger.log(`Navigating to user ${username}`);
+
+    const url = getUserPageUrl(username);
+    const status = await gotoWithRetry(url);
+    if (status === 404) {
+      logger.warn("User page returned 404");
+      return false;
+    }
+
+    if (status === 200) {
+      // some pages return 200 but nothing there (I think deleted accounts)
+      // https://github.com/mifi/SimpleInstaBot/issues/48
+      // example: https://www.instagram.com/victorialarson__/
+      // so we check if the page has the user's name on it
+      const elementHandles = await page.$$(
+        `xpath///body//main//*[contains(text(),${escapeXpathStr(username)})]`,
+      );
+      const foundUsernameOnPage = elementHandles.length > 0;
+      if (!foundUsernameOnPage)
+        logger.warn(`Cannot find text "${username}" on page`);
+      return foundUsernameOnPage;
+    }
+
+    throw new Error(`Navigate to user failed with status ${status}`);
+  }
+
   return {
     tryPressButton,
     gotoWithRetry,
     gotoUrl,
     goHome,
+    navigateToUser,
   };
 };
