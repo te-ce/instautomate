@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import { INSTAGRAM_URL } from "./const";
+import { HOUR_IN_MS, INSTAGRAM_URL, MINUTE_IN_MS, SECOND_IN_MS } from "./const";
 import { logger } from "./logger";
 
 export function shuffleArray(arrayIn: any[]) {
@@ -25,8 +25,20 @@ const sleepFixed = (ms: number) =>
 
 export const sleep = (ms: number, deviation = 1) => {
   const msWithDeviation = (Math.random() * deviation + 1) * ms;
-  logger.log("Waiting", (msWithDeviation / 1000).toFixed(2), "sec");
+  logger.log("Waiting", formatMs(msWithDeviation), "sec");
   return sleepFixed(msWithDeviation);
+};
+
+const formatMs = (ms: number) => {
+  const hours = Math.floor(ms / HOUR_IN_MS);
+
+  const restMs = ms - hours * HOUR_IN_MS;
+  const minutes = Math.floor(restMs / MINUTE_IN_MS);
+
+  const restMs2 = restMs - minutes * MINUTE_IN_MS;
+  const seconds = Math.floor(restMs2 / SECOND_IN_MS);
+
+  return `${hours}h ${minutes}m ${seconds}s`;
 };
 
 export const getPageJson = async (page: Page) => {
