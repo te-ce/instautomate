@@ -15,6 +15,8 @@ import {
   isAlreadyOnUserPage,
   isUserPrivate,
 } from "./util/status.ts";
+import { Locator } from "./actions/locator.ts";
+import { toggleUserSilentMode } from "./actions/interaction/toggleSilent.ts";
 
 export const Instauto = async (db: JsonDB, browser: Browser) => {
   const options = await getOptions();
@@ -37,6 +39,8 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
   const userDataCache: Record<string, User> = {};
   const page = await browser.newPage();
   const { gotoUrl, navigateToUser } = Navigation(page);
+  const { findUnfollowButton, findFollowButton, findUnfollowConfirmButton } =
+    Locator(page);
   const { addLikedPhoto, addPrevFollowedUser, addPrevUnfollowedUser } = db;
 
   assert(
@@ -205,126 +209,6 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     return { username, time: new Date().getTime(), href: "" };
   }
 
-  async function toggleUserSilentMode(username: string) {
-    await navigateToUser(username);
-
-    const unfollowButton = await findUnfollowButton();
-    const followButton = await findFollowButton();
-
-    if (!unfollowButton && followButton) {
-      logger.log("We are not following user, can't set silent");
-      return;
-    }
-
-    if (!unfollowButton && !followButton) {
-      logger.log(
-        "Can't find unfollow/follow button, are you already on the user page?",
-      );
-      return;
-    }
-
-    const muteSectionButton = await page.$$(
-      `xpath///div[contains(text(), 'Mute')]/parent::div`,
-    );
-
-    if (muteSectionButton.length === 0) {
-      logger.log("Can't find mute section button");
-      return;
-    }
-
-    await muteSectionButton[0].click();
-    await sleep(1000);
-
-    const mutePostsButton = await page.$$(
-      `xpath///div[contains(text(), 'Posts')]/parent::div`,
-    );
-    const muteStoriesButton = await page.$$(
-      `xpath///div[contains(text(), 'Stories')]/parent::div`,
-    );
-
-    if (mutePostsButton.length > 0 && muteStoriesButton.length > 0) {
-      logger.log("muting posts and stories");
-      await mutePostsButton[0].click();
-      await sleep(1000);
-      await muteStoriesButton[0].click();
-      await sleep(1000);
-    } else {
-      logger.log("Can't find mute posts/stories button");
-    }
-  }
-
-  // How to test xpaths in the browser:
-  // document.evaluate("your xpath", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null ).singleNodeValue
-  async function findButtonWithText(text: string) {
-    // todo escape text?
-
-    // button seems to look like this now:
-    // <button class="..."><div class="...">Follow</div></button>
-    // https://sqa.stackexchange.com/questions/36918/xpath-text-buy-now-is-working-but-not-containstext-buy-now
-    // https://github.com/mifi/SimpleInstaBot/issues/106
-    let elementHandles = await page.$$(
-      `xpath///header//button[contains(.,'${text}')]`,
-    );
-    if (elementHandles.length > 0) return elementHandles[0];
-
-    // old button:
-    elementHandles = await page.$$(`xpath///header//button[text()='${text}']`);
-    if (elementHandles.length > 0) return elementHandles[0];
-
-    return undefined;
-  }
-
-  async function findFollowButton() {
-    let button = await findButtonWithText("Follow");
-    if (button) return button;
-
-    button = await findButtonWithText("Follow Back");
-    if (button) return button;
-
-    return undefined;
-  }
-
-  async function findUnfollowButton() {
-    let button = await findButtonWithText("Following");
-    if (button) return button;
-
-    button = await findButtonWithText("Requested");
-    if (button) return button;
-
-    let elementHandles = await page.$$(
-      "xpath///header//button[*//span[@aria-label='Following']]",
-    );
-    if (elementHandles.length > 0) return elementHandles[0];
-
-    elementHandles = await page.$$(
-      "xpath///header//button[*//span[@aria-label='Requested']]",
-    );
-    if (elementHandles.length > 0) return elementHandles[0];
-
-    elementHandles = await page.$$(
-      "xpath///header//button[*//*[name()='svg'][@aria-label='Following']]",
-    );
-    if (elementHandles.length > 0) return elementHandles[0];
-
-    elementHandles = await page.$$(
-      "xpath///header//button[*//*[name()='svg'][@aria-label='Requested']]",
-    );
-    if (elementHandles.length > 0) return elementHandles[0];
-
-    return undefined;
-  }
-
-  async function findUnfollowConfirmButton() {
-    let elementHandles = await page.$$("xpath///button[text()='Unfollow']");
-    if (elementHandles.length > 0) return elementHandles[0];
-
-    // https://github.com/mifi/SimpleInstaBot/issues/191
-    elementHandles = await page.$$(
-      "xpath///*[@role='button'][contains(.,'Unfollow')]",
-    );
-    return elementHandles[0];
-  }
-
   async function followUser(username: string) {
     await navigateToUserAndGetData(username);
     const unfollowButton = await findUnfollowButton();
@@ -357,7 +241,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
 
       await addPrevFollowedUser(entry);
 
-      await toggleUserSilentMode(username);
+      await toggleUserSilentMode(page, username);
 
       if (!unfollowButton) {
         logger.log("Button did not change state - Sleeping 1 min");
