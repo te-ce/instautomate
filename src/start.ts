@@ -2,6 +2,7 @@ import puppeteer from "puppeteer";
 
 import { Instauto } from "./bot.ts";
 import { getOptions } from "./util/options.ts";
+import { sleepSeconds } from "./util/util.ts";
 
 (async () => {
   let browser;
@@ -42,17 +43,19 @@ import { getOptions } from "./util/options.ts";
     // Will unfollow auto-followed AND manually followed accounts who are not following us back, after some time has passed
     // The time is specified by config option dontUnfollowUntilTimeElapsed
     // await instauto.unfollowNonMutualFollowers();
-    // await instauto.sleep(10 * 60 * 1000);
+    // await instauto.sleepSeconds(10 * 60);
 
     // Unfollow previously auto-followed users (regardless of whether or not they are following us back)
     // after a certain amount of days (2 weeks)
     // Leave room to do following after this too (unfollow 2/3 of maxFollowsPerDay)
+    const MIN_UNFOLLOW_COUNT = 20;
     const unfollowedCount = await instauto.unfollowOldFollowed({
       ageInDays: options.unfollowAfterDays,
-      limit: Math.floor(options.maxFollowsPerDay * (4 / 3)),
+      limit:
+        MIN_UNFOLLOW_COUNT + Math.floor(options.maxFollowsPerDay * (4 / 3)),
     });
 
-    if (unfollowedCount > 0) await instauto.sleep(10 * 60 * 1000);
+    if (unfollowedCount > 0) await sleepSeconds(10 * 60);
 
     // List of usernames that we should follow the followers of, can be celebrities etc.
     const usersToFollowFollowersOf = options.usersToFollowFollowersOf;
@@ -66,11 +69,11 @@ import { getOptions } from "./util/options.ts";
       likeImagesMax: options.maxLikesPerDay,
     });
 
-    await instauto.sleep(10 * 60 * 1000);
+    await sleepSeconds(10 * 60);
 
     console.log("Done running");
 
-    await instauto.sleep(30000);
+    await sleepSeconds(30);
   } catch (err) {
     console.error(err);
   } finally {

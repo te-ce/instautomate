@@ -1,6 +1,6 @@
 import assert from "assert";
 import { jsonDb, JsonDB } from "./db/db.ts";
-import { shuffleArray, sleep, getPageJson } from "./util/util.ts";
+import { shuffleArray, getPageJson, sleepSeconds } from "./util/util.ts";
 import { Navigation } from "./actions/navigation.ts";
 import { takeScreenshot } from "./actions/screenshot.ts";
 import { BOT_WORK_SHIFT_HOURS, INSTAGRAM_URL } from "./util/const.ts";
@@ -16,7 +16,6 @@ import {
   isUserPrivate,
 } from "./util/status.ts";
 import { Locator } from "./actions/locator.ts";
-import { toggleUserSilentMode } from "./actions/interaction/toggleSilent.ts";
 
 export const Instauto = async (db: JsonDB, browser: Browser) => {
   const options = await getOptions();
@@ -215,7 +214,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
 
     if (unfollowButton) {
       logger.log("We are already following this user");
-      await sleep(5000);
+      await sleepSeconds(5);
       return;
     }
 
@@ -229,7 +228,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
 
     if (!dryRun) {
       await followButton.click();
-      await sleep(5000);
+      await sleepSeconds(10);
 
       await checkActionBlocked(page, browser);
 
@@ -241,16 +240,16 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
 
       await addPrevFollowedUser(entry);
 
-      await toggleUserSilentMode(page, username);
+      // await toggleUserSilentMode(page, username);
 
       if (!unfollowButton) {
         logger.log("Button did not change state - Sleeping 1 min");
-        await sleep(60000);
+        await sleepSeconds(60);
         throw new Error("Button did not change state");
       }
     }
 
-    await sleep(1000);
+    await sleepSeconds(1);
   }
 
   // See https://github.com/timgrossmann/InstaPy/pull/2345
@@ -276,11 +275,11 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     if (!dryRun) {
       if (elementHandle) {
         await elementHandle.click();
-        await sleep(1000);
+        await sleepSeconds(1);
         const confirmHandle = await findUnfollowConfirmButton();
         if (confirmHandle) await confirmHandle.click();
 
-        await sleep(5000);
+        await sleepSeconds(5);
 
         await checkActionBlocked(page, browser);
 
@@ -292,7 +291,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       await addPrevUnfollowedUser(res);
     }
 
-    await sleep(1000);
+    await sleepSeconds(1);
 
     return res;
   }
@@ -422,7 +421,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     for (const image of images) {
       await image.click();
 
-      await sleep(3000);
+      await sleepSeconds(3);
 
       const dialog = document.querySelector("*[role=dialog]");
 
@@ -511,7 +510,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
         likeImage();
       }
 
-      await sleep(3000);
+      await sleepSeconds(3);
 
       const closeButtonChild = document.querySelector(
         'svg[aria-label="Close"]',
@@ -526,7 +525,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
 
       closeButton.click();
 
-      await sleep(5000);
+      await sleepSeconds(5);
     }
 
     logger.log("Done liking images");
@@ -553,7 +552,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
 
     logger.log(`Liking ${likeImagesMin}-${likeImagesMax} user images`);
     try {
-      await page.exposeFunction("instautoSleep", sleep);
+      await page.exposeFunction("instautoSleep", sleepSeconds);
       await page.exposeFunction("instautoLog", (...args: any[]) =>
         console.log(...args),
       );
@@ -644,7 +643,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
 
     await followUser(username);
 
-    await sleep(30000);
+    await sleepSeconds(15);
     await throttle(db);
 
     return true;
@@ -726,7 +725,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
         } catch (err) {
           logger.error(`Failed to process follower ${follower}`, err);
           await takeScreenshot(page);
-          await sleep(20000);
+          await sleepSeconds(10);
         }
       }
     }
@@ -777,7 +776,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
           likeImagesMax,
         });
 
-        await sleep(10 * 60 * 1000);
+        await sleepSeconds(300);
         await throttle(db);
       } catch (err) {
         if (err instanceof Error && err.name === "DailyLimitReachedError") {
@@ -790,7 +789,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
           err,
         );
         await takeScreenshot(page);
-        await sleep(60 * 1000);
+        await sleepSeconds(60);
       }
     }
   }
@@ -824,21 +823,21 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
                 time: new Date().getTime(),
                 noActionTaken: true,
               });
-              await sleep(3000);
+              await sleepSeconds(3);
             } else {
               const { noActionTaken } = await unfollowUser(username);
 
               if (noActionTaken) {
-                await sleep(3000);
+                await sleepSeconds(3);
               } else {
-                await sleep(15000);
+                await sleepSeconds(15);
                 peopleUnfollowed += 1;
 
                 if (peopleUnfollowed % 10 === 0) {
                   logger.log(
                     "Have unfollowed 10 users since last break, pausing 10 min",
                   );
-                  await sleep(10 * 60 * 1000, 0.1);
+                  await sleepSeconds(600);
                 }
               }
             }
@@ -885,7 +884,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       } catch (err) {
         logger.error(`Failed to follow user ${username}, continuing`, err);
         await takeScreenshot(page);
-        await sleep(20000);
+        await sleepSeconds(20);
       }
     }
   }
@@ -1020,7 +1019,6 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     followUser,
     unfollowUser,
     likeUserImages,
-    sleep,
     listManuallyFollowedUsers,
     getFollowersOrFollowing,
     getUsersWhoLikedContent,

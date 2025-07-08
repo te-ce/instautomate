@@ -2,7 +2,7 @@ import { JsonDB } from "src/db/db";
 import { DAY_IN_MS, HOUR_IN_MS } from "src/util/const";
 import { logger } from "src/util/logger";
 import { getOptions } from "src/util/options";
-import { sleep } from "src/util/util";
+import { sleepSeconds } from "src/util/util";
 
 class DailyLimitReachedError extends Error {
   constructor(message: string) {
@@ -28,7 +28,7 @@ async function checkReachedFollowedUserDayLimit(db: JsonDB) {
 async function checkReachedFollowedUserHourLimit(db: JsonDB) {
   if (db.getNumFollowedUsersThisTimeUnit(HOUR_IN_MS) >= maxFollowsPerHour) {
     logger.log("Have reached hourly follow rate limit, pausing 10 min");
-    await sleep(10 * 60 * 1000);
+    await sleepSeconds(600);
   }
 }
 

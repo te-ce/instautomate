@@ -1,7 +1,7 @@
 import { Browser, Page } from "puppeteer";
 import { Options } from "src/util/types";
 import { logger } from "src/util/logger";
-import { sleep } from "src/util/util";
+import { sleepSeconds } from "src/util/util";
 import UserAgent from "user-agents";
 import { Cookies } from "./cookies";
 import { Navigation } from "./navigation";
@@ -45,7 +45,7 @@ export const startup = async (
   }
 
   await goHome();
-  await sleep(1000);
+  await sleepSeconds(1);
 
   await tryPressButton(
     await page.$$('xpath///button[contains(text(), "Allow all cookies")]'),
@@ -60,14 +60,14 @@ export const startup = async (
       'xpath///button[contains(text(), "Only allow essential cookies")]',
     ),
     "Accept cookies dialog 2 button 1",
-    10000,
+    10,
   );
   await tryPressButton(
     await page.$$(
       'xpath///button[contains(text(), "Allow essential and optional cookies")]',
     ),
     "Accept cookies dialog 2 button 2",
-    10000,
+    10,
   );
 
   if (!(await isLoggedIn(page))) {
@@ -80,7 +80,7 @@ export const startup = async (
 
     try {
       await page.click('a[href="/accounts/login/?source=auth_switcher"]');
-      await sleep(1000);
+      await sleepSeconds(1);
     } catch (err) {
       logger.info("No login page button, assuming we are on login form", err);
     }
@@ -92,9 +92,9 @@ export const startup = async (
     );
 
     await page.type('input[name="username"]', username, { delay: 50 });
-    await sleep(1000);
+    await sleepSeconds(1);
     await page.type('input[name="password"]', password, { delay: 50 });
-    await sleep(1000);
+    await sleepSeconds(1);
 
     for (;;) {
       const didClickLogin = await tryClickLogin();
@@ -102,17 +102,17 @@ export const startup = async (
       logger.warn(
         "Login button not found. Maybe you can help me click it? And also report an issue on github with a screenshot of what you're seeing :)",
       );
-      await sleep(6000);
+      await sleepSeconds(6);
     }
 
-    await sleep(10000);
+    await sleepSeconds(10);
 
     // Sometimes login button gets stuck with a spinner
     // https://github.com/mifi/SimpleInstaBot/issues/25
     if (!(await isLoggedIn(page))) {
       logger.log("Still not logged in, trying to reload loading page");
       await page.reload();
-      await sleep(5000);
+      await sleepSeconds(5);
     }
 
     let warnedAboutLoginFail = false;
@@ -122,11 +122,11 @@ export const startup = async (
           'WARNING: Login has not succeeded. This could be because of an incorrect username/password, or a "suspicious login attempt"-message. You need to manually complete the process, or if really logged in, click the Instagram logo in the top left to go to the Home page.',
         );
       warnedAboutLoginFail = true;
-      await sleep(5000);
+      await sleepSeconds(5);
     }
 
     await goHome();
-    await sleep(1000);
+    await sleepSeconds(1);
 
     // Mobile version https://github.com/mifi/SimpleInstaBot/issues/7
     await tryPressButton(

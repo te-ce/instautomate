@@ -1,7 +1,7 @@
 import { Browser, Page } from "puppeteer";
 import { Cookies } from "src/actions/cookies";
 import { logger } from "./logger";
-import { escapeXpathStr, getUserPageUrl, sleep } from "./util";
+import { escapeXpathStr, getUserPageUrl, sleepSeconds } from "./util";
 
 export async function isLoggedIn(page: Page) {
   return (await page.$$('xpath///*[@aria-label="Home"]')).length === 1;
@@ -25,7 +25,7 @@ export async function checkActionBlocked(page: Page, browser: Browser) {
     const hours = 3;
     logger.error(`Action Blocked, waiting ${hours} hours...`);
     await tryDeleteCookies();
-    await sleep(hours * 60 * 60 * 1000);
+    await sleepSeconds(hours * 60 * 60);
     throw new Error("Aborted operation due to action blocked");
   }
 }

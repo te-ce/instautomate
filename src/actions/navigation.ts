@@ -2,19 +2,19 @@ import { ElementHandle, Page } from "puppeteer";
 import { INSTAGRAM_URL } from "src/util/const";
 import { logger } from "src/util/logger";
 import { isAlreadyOnUserPage } from "src/util/status";
-import { escapeXpathStr, getUserPageUrl, sleep } from "src/util/util";
+import { escapeXpathStr, getUserPageUrl, sleepSeconds } from "src/util/util";
 
 export const Navigation = (page: Page) => {
   async function tryPressButton(
     elementHandles: ElementHandle[],
     name: string,
-    sleepMs = 3000,
+    sleepSec = 3,
   ) {
     try {
       if (elementHandles.length === 1) {
         logger.log(`Pressing button: ${name}`);
         elementHandles[0].click();
-        await sleep(sleepMs);
+        await sleepSeconds(sleepSec);
       }
     } catch (err) {
       logger.warn(`Failed to press button: ${name}`, err);
@@ -36,7 +36,7 @@ export const Navigation = (page: Page) => {
       const response = await gotoUrl(url);
       const status = response?.status();
       logger.log("Page loaded");
-      await sleep(2000);
+      await sleepSeconds(2);
 
       // https://www.reddit.com/r/Instagram/comments/kwrt0s/error_560/
       // https://github.com/mifi/instauto/issues/60
@@ -53,7 +53,7 @@ export const Navigation = (page: Page) => {
         logger.warn(
           "429 Too Many Requests could mean that Instagram suspects you're using a bot. You could try to use the Instagram Mobile app from the same IP for a few days first",
         );
-      await sleep((attempt + 1) * 30 * 60 * 1000);
+      await sleepSeconds((attempt + 1) * 30 * 60);
     }
   }
 
