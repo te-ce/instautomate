@@ -3,11 +3,11 @@ import { Options } from "src/util/types";
 import { logger } from "src/util/logger";
 import { sleepSeconds } from "src/util/util";
 import UserAgent from "user-agents";
-import { Cookies } from "./cookies";
-import { Navigation } from "./navigation";
 import { JsonDB } from "src/db/db";
 import { DAY_IN_MS, HOUR_IN_MS } from "src/util/const";
 import { isLoggedIn } from "src/util/status";
+import { tryDeleteCookies, tryLoadCookies, trySaveCookies } from "./cookies";
+import { goHome, tryPressButton } from "./navigation";
 
 export const startup = async (
   page: Page,
@@ -16,9 +16,6 @@ export const startup = async (
   db: JsonDB,
 ) => {
   const { randomizeUserAgent, enableCookies, password, username } = options;
-  const { tryLoadCookies, trySaveCookies, tryDeleteCookies } =
-    await Cookies(browser);
-  const { tryPressButton, goHome } = Navigation(page);
   const { getNumFollowedUsersThisTimeUnit, getLikedPhotosLastTimeUnit } = db;
 
   // https://github.com/mifi/SimpleInstaBot/issues/118#issuecomment-1067883091
@@ -29,7 +26,7 @@ export const startup = async (
     await page.setUserAgent(userAgentGenerated.toString());
   }
 
-  if (enableCookies) await tryLoadCookies();
+  if (enableCookies) await tryLoadCookies(browser);
 
   async function tryClickLogin() {
     async function tryClickButton(xpath: string) {
@@ -44,7 +41,7 @@ export const startup = async (
     return false;
   }
 
-  await goHome();
+  await goHome(page);
   await sleepSeconds(1);
 
   await tryPressButton(
@@ -125,7 +122,7 @@ export const startup = async (
       await sleepSeconds(5);
     }
 
-    await goHome();
+    await goHome(page);
     await sleepSeconds(1);
 
     // Mobile version https://github.com/mifi/SimpleInstaBot/issues/7
@@ -145,7 +142,7 @@ export const startup = async (
     "Turn on Notifications dialog",
   );
 
-  await trySaveCookies();
+  await trySaveCookies(browser);
 
   logger.log(
     `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(HOUR_IN_MS)} in the last hour`,

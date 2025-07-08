@@ -1,17 +1,15 @@
 import { Page } from "puppeteer";
 import { logger } from "src/util/logger";
 import { sleepSeconds } from "src/util/util";
-import { Navigation } from "../navigation";
-import { Locator } from "../locator";
+import { navigateToUser } from "../navigation";
+import { findUnfollowButton, findFollowButton } from "../locator";
 
 export async function toggleUserSilentMode(page: Page, username: string) {
-  const { navigateToUser } = Navigation(page);
-  const { findUnfollowButton, findFollowButton } = Locator(page);
 
-  await navigateToUser(username);
+  await navigateToUser(page, username);
 
-  const unfollowButton = await findUnfollowButton();
-  const followButton = await findFollowButton();
+  const unfollowButton = await findUnfollowButton(page);
+  const followButton = await findFollowButton(page);
 
   if (!unfollowButton && followButton) {
     logger.log("We are not following user, can't set silent");

@@ -1,7 +1,7 @@
-import { Browser, Page } from "puppeteer";
-import { Cookies } from "src/actions/cookies";
+import { Page } from "puppeteer";
 import { logger } from "./logger";
 import { escapeXpathStr, getUserPageUrl, sleepSeconds } from "./util";
+import { tryDeleteCookies } from "src/actions/cookies";
 
 export async function isLoggedIn(page: Page) {
   return (await page.$$('xpath///*[@aria-label="Home"]')).length === 1;
@@ -19,8 +19,7 @@ export async function isActionBlocked(page: Page) {
   return false;
 }
 
-export async function checkActionBlocked(page: Page, browser: Browser) {
-  const { tryDeleteCookies } = await Cookies(browser);
+export async function checkActionBlocked(page: Page) {
   if (await isActionBlocked(page)) {
     const hours = 3;
     logger.error(`Action Blocked, waiting ${hours} hours...`);

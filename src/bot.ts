@@ -1,7 +1,6 @@
 import assert from "assert";
 import { jsonDb, JsonDB } from "./db/db.ts";
 import { shuffleArray, getPageJson, sleepSeconds } from "./util/util.ts";
-import { Navigation } from "./actions/navigation.ts";
 import { takeScreenshot } from "./actions/screenshot.ts";
 import { BOT_WORK_SHIFT_HOURS, INSTAGRAM_URL } from "./util/const.ts";
 import { Browser } from "puppeteer";
@@ -15,7 +14,8 @@ import {
   isAlreadyOnUserPage,
   isUserPrivate,
 } from "./util/status.ts";
-import { Locator } from "./actions/locator.ts";
+import { gotoUrl, navigateToUser } from "./actions/navigation.ts";
+import { findFollowButton, findUnfollowButton, findUnfollowConfirmButton } from "./actions/locator.ts";
 
 export const Instauto = async (db: JsonDB, browser: Browser) => {
   const options = await getOptions();
@@ -35,12 +35,9 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     excludeUsers,
     dryRun,
   } = options;
-  const userDataCache: Record<string, User> = {};
-  const page = await browser.newPage();
-  const { gotoUrl, navigateToUser } = Navigation(page);
-  const { findUnfollowButton, findFollowButton, findUnfollowConfirmButton } =
-    Locator(page);
   const { addLikedPhoto, addPrevFollowedUser, addPrevUnfollowedUser } = db;
+  const page = await browser.newPage();
+  const userDataCache: Record<string, User> = {};
 
   assert(
     maxFollowsPerHour * BOT_WORK_SHIFT_HOURS >= maxFollowsPerDay,
@@ -68,11 +65,11 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
   }
 
   async function navigateToUserWithCheck(username: string) {
-    if (!(await navigateToUser(username))) throw new Error("User not found");
+    if (!(await navigateToUser(page, username))) throw new Error("User not found");
   }
 
   async function navigateToUserAndGetProfileIdFromHtml(username: string) {
-    await navigateToUser(username);
+    await navigateToUser(page, username);
 
     const profileId = await page.evaluate(() => {
       const content = document.body.innerHTML;
@@ -210,7 +207,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
 
   async function followUser(username: string) {
     await navigateToUserAndGetData(username);
-    const unfollowButton = await findUnfollowButton();
+    const unfollowButton = await findUnfollowButton(page);
 
     if (unfollowButton) {
       logger.log("We are already following this user");
@@ -218,7 +215,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       return;
     }
 
-    const followButton = await findFollowButton();
+    const followButton = await findFollowButton(page);
 
     if (!followButton) {
       throw new Error("Follow button not found");
@@ -230,9 +227,9 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       await followButton.click();
       await sleepSeconds(10);
 
-      await checkActionBlocked(page, browser);
+      await checkActionBlocked(page);
 
-      const unfollowButton = await findUnfollowButton();
+      const unfollowButton = await findUnfollowButton(page);
 
       // Don't want to retry this user over and over in case there is an issue https://github.com/mifi/instauto/issues/33#issuecomment-723217177
       const entry: User = { username, time: new Date().getTime(), href: "" };
@@ -260,9 +257,9 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
 
     const res: User = { username, time: new Date().getTime() };
 
-    const elementHandle = await findUnfollowButton();
+    const elementHandle = await findUnfollowButton(page);
     if (!elementHandle) {
-      const elementHandle2 = await findFollowButton();
+      const elementHandle2 = await findFollowButton(page);
       if (elementHandle2) {
         logger.log("User has been unfollowed already");
         res.noActionTaken = true;
@@ -276,14 +273,14 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       if (elementHandle) {
         await elementHandle.click();
         await sleepSeconds(1);
-        const confirmHandle = await findUnfollowConfirmButton();
+        const confirmHandle = await findUnfollowConfirmButton(page);
         if (confirmHandle) await confirmHandle.click();
 
         await sleepSeconds(5);
 
-        await checkActionBlocked(page, browser);
+        await checkActionBlocked(page);
 
-        const elementHandle2 = await findFollowButton();
+        const elementHandle2 = await findFollowButton(page);
         if (!elementHandle2)
           throw new Error("Unfollow button did not change state");
       }
@@ -320,7 +317,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
     while (hasNextPage) {
       const url = `${graphqlUrl}&variables=${JSON.stringify(graphqlVariables)}`;
 
-      await gotoUrl(url);
+      await gotoUrl(page, url);
       const json = await getPageJson(page);
 
       const subProp = getResponseProp(json);
@@ -813,7 +810,7 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
       for (const username of list) {
         if (await condition(username)) {
           try {
-            const userFound = await navigateToUser(username);
+            const userFound = await navigateToUser(page, username);
 
             if (!userFound) {
               // to avoid repeatedly unfollowing failed users, flag them as already unfollowed
