@@ -15,7 +15,6 @@ Your instagram account should be set to english.
 
 # Roadmap
 
-- refactor codebase into smaller files
 - Fix reading user data (get it from html data instead of api)
 - Fix taking screenshots
 - Silently follow users (follow and mute stories and posts)

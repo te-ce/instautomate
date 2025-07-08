@@ -53,6 +53,10 @@ import { sleepSeconds } from "./util/util.ts";
       ageInDays: options.unfollowAfterDays,
       limit:
         MIN_UNFOLLOW_COUNT + Math.floor(options.maxFollowsPerDay * (4 / 3)),
+      myUserId: instauto.myUserId,
+      page: instauto.getPage(),
+      db: instautoDb,
+      userDataCache: instauto.userDataCache,
     });
 
     if (unfollowedCount > 0) await sleepSeconds(10 * 60);
@@ -67,6 +71,9 @@ import { sleepSeconds } from "./util/util.ts";
       skipPrivate: options.skipPrivate,
       enableLikeImages: options.enableLikeImages,
       likeImagesMax: options.maxLikesPerDay,
+      page: instauto.getPage(),
+      db: instautoDb,
+      userDataCache: instauto.userDataCache,
     });
 
     await sleepSeconds(10 * 60);
