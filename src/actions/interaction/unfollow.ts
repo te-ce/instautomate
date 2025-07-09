@@ -74,7 +74,7 @@ export async function unfollowOldFollowed({
   db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
-  assert(ageInDays);
+  assert(ageInDays >= 0);
   const { excludeUsers } = await getOptions();
 
   logger.log(
@@ -183,11 +183,9 @@ export async function safelyUnfollowUsers({
             await sleep({ seconds: 15 });
             peopleUnfollowed += 1;
 
-            if (peopleUnfollowed % 10 === 0) {
-              logger.log(
-                "Have unfollowed 10 users since last break, pausing 10 min",
-              );
-              await sleep({ minutes: 10 });
+            if (peopleUnfollowed % 20 === 0) {
+              logger.log("Have unfollowed 20 users since last break, pausing");
+              await sleep({ minutes: 2 });
             }
           }
         }
