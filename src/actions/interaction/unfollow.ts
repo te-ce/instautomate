@@ -21,6 +21,7 @@ import {
   getFollowersOrFollowingGenerator,
   navigateToUserAndGetData,
 } from "../data";
+import { MIN_IN_S } from "src/util/const";
 
 export async function unfollowAllUnknown({
   limit,
@@ -166,7 +167,7 @@ export async function safelyUnfollowUserList({
                 logger.log(
                   "Have unfollowed 10 users since last break, pausing 10 min",
                 );
-                await sleepSeconds(600);
+                await sleepSeconds(10 * MIN_IN_S);
               }
             }
           }

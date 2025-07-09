@@ -1,6 +1,6 @@
 import { logger } from "src/util/logger";
 import { gotoUrl, navigateToUser } from "./navigation";
-import { INSTAGRAM_URL } from "src/util/const";
+import { INSTAGRAM_URL, MIN_IN_S } from "src/util/const";
 import { Page } from "puppeteer";
 import { getPageJson, shuffleArray, sleepSeconds } from "src/util/util";
 import { takeScreenshot } from "./screenshot";
@@ -269,7 +269,7 @@ export async function processUsersFollowers({
         userDataCache,
       });
 
-      await sleepSeconds(300);
+      await sleepSeconds(5 * MIN_IN_S);
       await throttle(db);
     } catch (err) {
       if (err instanceof Error && err.name === "DailyLimitReachedError") {

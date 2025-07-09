@@ -99,17 +99,17 @@ export const startup = async (
       logger.warn(
         "Login button not found. Maybe you can help me click it? And also report an issue on github with a screenshot of what you're seeing :)",
       );
-      await sleepSeconds(6);
+      await sleepSeconds(15);
     }
 
-    await sleepSeconds(10);
+    await sleepSeconds(30);
 
     // Sometimes login button gets stuck with a spinner
     // https://github.com/mifi/SimpleInstaBot/issues/25
     if (!(await isLoggedIn(page))) {
       logger.log("Still not logged in, trying to reload loading page");
       await page.reload();
-      await sleepSeconds(5);
+      await sleepSeconds(60);
     }
 
     let warnedAboutLoginFail = false;

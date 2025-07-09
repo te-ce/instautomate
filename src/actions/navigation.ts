@@ -1,5 +1,5 @@
 import { ElementHandle, Page } from "puppeteer";
-import { INSTAGRAM_URL } from "src/util/const";
+import { INSTAGRAM_URL, MIN_IN_S } from "src/util/const";
 import { logger } from "src/util/logger";
 import { isAlreadyOnUserPage } from "src/util/status";
 import { escapeXpathStr, getUserPageUrl, sleepSeconds } from "src/util/util";
@@ -52,7 +52,7 @@ export async function gotoWithRetry(page: Page, url: string) {
       logger.warn(
         "429 Too Many Requests could mean that Instagram suspects you're using a bot. You could try to use the Instagram Mobile app from the same IP for a few days first",
       );
-    await sleepSeconds((attempt + 1) * 30 * 60);
+    await sleepSeconds((attempt + 1) * 30 * MIN_IN_S);
   }
 }
 
