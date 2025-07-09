@@ -1,7 +1,7 @@
 import { Browser, Page } from "puppeteer";
 import { Options } from "src/util/types";
 import { logger } from "src/util/logger";
-import { sleepSeconds } from "src/util/util";
+import { sleep } from "src/util/util";
 import UserAgent from "user-agents";
 import { JsonDB } from "src/db/db";
 import { DAY_IN_MS, HOUR_IN_MS } from "src/util/const";
@@ -42,7 +42,7 @@ export const startup = async (
   }
 
   await goHome(page);
-  await sleepSeconds(1);
+  await sleep({ seconds: 1 });
 
   await tryPressButton(
     await page.$$('xpath///button[contains(text(), "Allow all cookies")]'),
@@ -77,7 +77,7 @@ export const startup = async (
 
     try {
       await page.click('a[href="/accounts/login/?source=auth_switcher"]');
-      await sleepSeconds(1);
+      await sleep({ seconds: 1 });
     } catch (err) {
       logger.info("No login page button, assuming we are on login form", err);
     }
@@ -89,9 +89,9 @@ export const startup = async (
     );
 
     await page.type('input[name="username"]', username, { delay: 50 });
-    await sleepSeconds(1);
+    await sleep({ seconds: 1 });
     await page.type('input[name="password"]', password, { delay: 50 });
-    await sleepSeconds(1);
+    await sleep({ seconds: 1 });
 
     for (;;) {
       const didClickLogin = await tryClickLogin();
@@ -99,17 +99,17 @@ export const startup = async (
       logger.warn(
         "Login button not found. Maybe you can help me click it? And also report an issue on github with a screenshot of what you're seeing :)",
       );
-      await sleepSeconds(15);
+      await sleep({ seconds: 15 });
     }
 
-    await sleepSeconds(30);
+    await sleep({ seconds: 30 });
 
     // Sometimes login button gets stuck with a spinner
     // https://github.com/mifi/SimpleInstaBot/issues/25
     if (!(await isLoggedIn(page))) {
       logger.log("Still not logged in, trying to reload loading page");
       await page.reload();
-      await sleepSeconds(60);
+      await sleep({ seconds: 60 });
     }
 
     let warnedAboutLoginFail = false;
@@ -119,11 +119,11 @@ export const startup = async (
           'WARNING: Login has not succeeded. This could be because of an incorrect username/password, or a "suspicious login attempt"-message. You need to manually complete the process, or if really logged in, click the Instagram logo in the top left to go to the Home page.',
         );
       warnedAboutLoginFail = true;
-      await sleepSeconds(5);
+      await sleep({ seconds: 5 });
     }
 
     await goHome(page);
-    await sleepSeconds(1);
+    await sleep({ seconds: 1 });
 
     // Mobile version https://github.com/mifi/SimpleInstaBot/issues/7
     await tryPressButton(

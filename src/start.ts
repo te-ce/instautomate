@@ -2,8 +2,7 @@ import puppeteer from "puppeteer";
 
 import { Instauto } from "./bot.ts";
 import { getOptions } from "./util/options.ts";
-import { sleepSeconds } from "./util/util.ts";
-import { MIN_IN_S } from "./util/const.ts";
+import { sleep } from "./util/util.ts";
 
 (async () => {
   let browser;
@@ -59,7 +58,7 @@ import { MIN_IN_S } from "./util/const.ts";
       userDataCache: instauto.userDataCache,
     });
 
-    if (unfollowedCount > 0) await sleepSeconds(10 * MIN_IN_S);
+    if (unfollowedCount > 0) await sleep({ minutes: 10 });
 
     // List of usernames that we should follow the followers of, can be celebrities etc.
     const usersToFollowFollowersOf = options.usersToFollowFollowersOf;
@@ -76,11 +75,11 @@ import { MIN_IN_S } from "./util/const.ts";
       userDataCache: instauto.userDataCache,
     });
 
-    await sleepSeconds(10 * MIN_IN_S);
+    await sleep({ minutes: 10 });
 
     console.log("Done running");
 
-    await sleepSeconds(30);
+    await sleep({ seconds: 30 });
   } catch (err) {
     console.error(err);
   } finally {

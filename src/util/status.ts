@@ -1,12 +1,11 @@
 import { Page } from "puppeteer";
 import { logger } from "./logger";
-import { escapeXpathStr, getUserPageUrl, sleepSeconds } from "./util";
+import { escapeXpathStr, getUserPageUrl, sleep } from "./util";
 import { tryDeleteCookies } from "src/actions/cookies";
 import { JsonDB } from "src/db/db";
 import { getOptions } from "./options";
 import { navigateToUserAndGetProfileId } from "src/actions/data";
 import { User } from "./types";
-import { HOUR_IN_S } from "./const";
 
 export async function isLoggedIn(page: Page) {
   return (await page.$$('xpath///*[@aria-label="Home"]')).length === 1;
@@ -29,7 +28,7 @@ export async function checkActionBlocked(page: Page) {
     const hours = 3;
     logger.error(`Action Blocked, waiting ${hours} hours...`);
     await tryDeleteCookies();
-    await sleepSeconds(hours * HOUR_IN_S);
+    await sleep({ hours });
     throw new Error("Aborted operation due to action blocked");
   }
 }

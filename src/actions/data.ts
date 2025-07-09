@@ -1,8 +1,8 @@
 import { logger } from "src/util/logger";
 import { gotoUrl, navigateToUser } from "./navigation";
-import { INSTAGRAM_URL, MIN_IN_S } from "src/util/const";
+import { INSTAGRAM_URL } from "src/util/const";
 import { Page } from "puppeteer";
-import { getPageJson, shuffleArray, sleepSeconds } from "src/util/util";
+import { getPageJson, shuffleArray, sleep } from "src/util/util";
 import { takeScreenshot } from "./screenshot";
 import { throttle } from "./limit";
 import { JsonDB } from "src/db/db";
@@ -208,7 +208,7 @@ export async function processUserFollowers({
       } catch (err) {
         logger.error(`Failed to process follower ${follower}`, err);
         await takeScreenshot(page);
-        await sleepSeconds(10);
+        await sleep({ seconds: 10 });
       }
     }
   }
@@ -269,7 +269,7 @@ export async function processUsersFollowers({
         userDataCache,
       });
 
-      await sleepSeconds(5 * MIN_IN_S);
+      await sleep({ minutes: 5 });
       await throttle(db);
     } catch (err) {
       if (err instanceof Error && err.name === "DailyLimitReachedError") {
@@ -282,7 +282,7 @@ export async function processUsersFollowers({
         err,
       );
       await takeScreenshot(page);
-      await sleepSeconds(60);
+      await sleep({ seconds: 60 });
     }
   }
 }

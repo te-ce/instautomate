@@ -3,7 +3,7 @@ import { logger } from "src/util/logger";
 import { navigateToUser } from "../navigation";
 import { JsonDB } from "src/db/db";
 import { Page } from "puppeteer";
-import { sleepSeconds } from "src/util/util";
+import { sleep } from "src/util/util";
 import { throttle } from "../limit";
 import {
   findFollowButton,
@@ -168,7 +168,7 @@ export async function safelyUnfollowUsers({
             time: new Date().getTime(),
             noActionTaken: true,
           });
-          await sleepSeconds(3);
+          await sleep({ seconds: 3 });
         } else {
           const { noActionTaken } = await unfollowUser({
             username,
@@ -178,16 +178,16 @@ export async function safelyUnfollowUsers({
           });
 
           if (noActionTaken) {
-            await sleepSeconds(3);
+            await sleep({ seconds: 3 });
           } else {
-            await sleepSeconds(15);
+            await sleep({ seconds: 15 });
             peopleUnfollowed += 1;
 
             if (peopleUnfollowed % 10 === 0) {
               logger.log(
                 "Have unfollowed 10 users since last break, pausing 10 min",
               );
-              await sleepSeconds(10 * MIN_IN_S);
+              await sleep({ minutes: 10 });
             }
           }
         }
@@ -249,11 +249,11 @@ export async function unfollowUser({
   if (!dryRun) {
     if (elementHandle) {
       await elementHandle.click();
-      await sleepSeconds(1);
+      await sleep({ seconds: 1 });
       const confirmHandle = await findUnfollowConfirmButton(page);
       if (confirmHandle) await confirmHandle.click();
 
-      await sleepSeconds(5);
+      await sleep({ seconds: 5 });
 
       await checkActionBlocked(page);
 
@@ -265,7 +265,7 @@ export async function unfollowUser({
     await db.addPrevUnfollowedUser(res);
   }
 
-  await sleepSeconds(1);
+  await sleep({ seconds: 1 });
 
   return res;
 }

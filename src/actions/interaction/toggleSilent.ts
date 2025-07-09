@@ -1,11 +1,10 @@
 import { Page } from "puppeteer";
 import { logger } from "src/util/logger";
-import { sleepSeconds } from "src/util/util";
+import { sleep } from "src/util/util";
 import { navigateToUser } from "../navigation";
 import { findUnfollowButton, findFollowButton } from "../locator";
 
 export async function toggleUserSilentMode(page: Page, username: string) {
-
   await navigateToUser(page, username);
 
   const unfollowButton = await findUnfollowButton(page);
@@ -24,7 +23,7 @@ export async function toggleUserSilentMode(page: Page, username: string) {
   }
 
   await unfollowButton?.click();
-  await sleepSeconds(2);
+  await sleep({ seconds: 2 });
   await muteStoriesValue(page);
   const muteSectionButton = await page.$$(`xpath///span[text()='Mute']`);
 
@@ -34,7 +33,7 @@ export async function toggleUserSilentMode(page: Page, username: string) {
   }
 
   await muteSectionButton[0].click();
-  await sleepSeconds(2);
+  await sleep({ seconds: 2 });
 
   const mutePostsButton = await page.$$(`xpath///span[text()='Posts']`);
   const muteStoriesButton = await page.$$(`xpath///span[text()='Stories']`);
@@ -42,9 +41,9 @@ export async function toggleUserSilentMode(page: Page, username: string) {
   if (mutePostsButton.length > 0 && muteStoriesButton.length > 0) {
     logger.log("muting posts and stories");
     await mutePostsButton[0].click();
-    await sleepSeconds(1);
+    await sleep({ seconds: 1 });
     await muteStoriesButton[0].click();
-    await sleepSeconds(1);
+    await sleep({ seconds: 1 });
   } else {
     logger.log("Can't find mute posts/stories button");
   }

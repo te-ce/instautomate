@@ -1,8 +1,8 @@
 import { ElementHandle, Page } from "puppeteer";
-import { INSTAGRAM_URL, MIN_IN_S } from "src/util/const";
+import { INSTAGRAM_URL } from "src/util/const";
 import { logger } from "src/util/logger";
 import { isAlreadyOnUserPage } from "src/util/status";
-import { escapeXpathStr, getUserPageUrl, sleepSeconds } from "src/util/util";
+import { escapeXpathStr, getUserPageUrl, sleep } from "src/util/util";
 
 export async function tryPressButton(
   elementHandles: ElementHandle[],
@@ -13,14 +13,15 @@ export async function tryPressButton(
     if (elementHandles.length === 1) {
       logger.log(`Pressing button: ${name}`);
       elementHandles[0].click();
-      await sleepSeconds(sleepSec);
+      await sleep({ seconds: sleepSec });
     }
   } catch (err) {
     logger.warn(`Failed to press button: ${name}`, err);
   }
 }
 
-export const goHome = async (page: Page) => gotoUrl(page, `${INSTAGRAM_URL}/?hl=en`);
+export const goHome = async (page: Page) =>
+  gotoUrl(page, `${INSTAGRAM_URL}/?hl=en`);
 
 // See https://github.com/mifi/SimpleInstaBot/issues/140#issuecomment-1149105387
 export const gotoUrl = async (page: Page, url: string) =>
@@ -35,7 +36,7 @@ export async function gotoWithRetry(page: Page, url: string) {
     const response = await gotoUrl(page, url);
     const status = response?.status();
     logger.log("Page loaded");
-    await sleepSeconds(2);
+    await sleep({ seconds: 2 });
 
     // https://www.reddit.com/r/Instagram/comments/kwrt0s/error_560/
     // https://github.com/mifi/instauto/issues/60
@@ -52,7 +53,7 @@ export async function gotoWithRetry(page: Page, url: string) {
       logger.warn(
         "429 Too Many Requests could mean that Instagram suspects you're using a bot. You could try to use the Instagram Mobile app from the same IP for a few days first",
       );
-    await sleepSeconds((attempt + 1) * 30 * MIN_IN_S);
+    await sleep({ minutes: (attempt + 1) * 30 });
   }
 }
 

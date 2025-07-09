@@ -3,7 +3,7 @@ import { JsonDB } from "src/db/db";
 import { Page } from "puppeteer";
 import { checkActionBlocked, isUserPrivate } from "src/util/status";
 import { getOptions } from "src/util/options";
-import { sleepSeconds } from "src/util/util";
+import { sleep } from "src/util/util";
 import { throttle } from "../limit";
 import { takeScreenshot } from "../screenshot";
 import { findFollowButton, findUnfollowButton } from "../locator";
@@ -98,7 +98,7 @@ export async function followUserRespectingRestrictions({
 
   await followUser({ username, page, userDataCache, db });
 
-  await sleepSeconds(15);
+  await sleep({ seconds: 15 });
   await throttle(db);
 
   return true;
@@ -135,7 +135,7 @@ export async function safelyFollowUserList({
     } catch (err) {
       logger.error(`Failed to follow user ${username}, continuing`, err);
       await takeScreenshot(page);
-      await sleepSeconds(20);
+      await sleep({ seconds: 20 });
     }
   }
 }
@@ -157,7 +157,7 @@ export async function followUser({
 
   if (unfollowButton) {
     logger.log("We are already following this user");
-    await sleepSeconds(5);
+    await sleep({ seconds: 5 });
     return;
   }
 
@@ -171,7 +171,7 @@ export async function followUser({
 
   if (!dryRun) {
     await followButton.click();
-    await sleepSeconds(10);
+    await sleep({ seconds: 10 });
 
     await checkActionBlocked(page);
 
@@ -187,10 +187,10 @@ export async function followUser({
 
     if (!unfollowButton) {
       logger.log("Button did not change state - Sleeping 1 min");
-      await sleepSeconds(60);
+      await sleep({ seconds: 60 });
       throw new Error("Button did not change state");
     }
   }
 
-  await sleepSeconds(1);
+  await sleep({ seconds: 1 });
 }

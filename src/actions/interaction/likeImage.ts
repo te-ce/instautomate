@@ -1,7 +1,7 @@
 import { Page } from "puppeteer";
 import { logger } from "src/util/logger";
 import { Media, User } from "src/util/types";
-import { shuffleArray, sleepSeconds } from "src/util/util";
+import { shuffleArray, sleep } from "src/util/util";
 import { navigateToUserAndGetData } from "../data";
 import { getOptions } from "src/util/options";
 import { JsonDB } from "src/db/db";
@@ -41,7 +41,7 @@ export async function likeCurrentUserImagesPageCode({
   for (const image of images) {
     await image.click();
 
-    await sleepSeconds(3);
+    await sleep({ seconds: 3 });
 
     const dialog = document.querySelector("*[role=dialog]");
 
@@ -127,7 +127,7 @@ export async function likeCurrentUserImagesPageCode({
       likeImage();
     }
 
-    await sleepSeconds(3);
+    await sleep({ seconds: 3 });
 
     const closeButtonChild = document.querySelector('svg[aria-label="Close"]');
 
@@ -140,7 +140,7 @@ export async function likeCurrentUserImagesPageCode({
 
     closeButton.click();
 
-    await sleepSeconds(5);
+    await sleep({ seconds: 5 });
   }
 
   logger.log("Done liking images");
@@ -175,7 +175,7 @@ export async function likeUserImages({
 
   logger.log(`Liking ${likeImagesMin}-${likeImagesMax} user images`);
   try {
-    await page.exposeFunction("instautoSleep", sleepSeconds);
+    await page.exposeFunction("instautoSleep", sleep);
     await page.exposeFunction("instautoLog", (...args: any[]) =>
       console.log(...args),
     );
