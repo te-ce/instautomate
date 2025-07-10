@@ -178,14 +178,14 @@ export async function safelyUnfollowUsers({
           });
 
           if (noActionTaken) {
-            await sleep({ seconds: 3 });
+            await sleep({ seconds: 5 });
           } else {
             await sleep({ seconds: 15 });
             peopleUnfollowed += 1;
 
-            if (peopleUnfollowed % 20 === 0) {
-              logger.log("Have unfollowed 20 users since last break, pausing");
-              await sleep({ minutes: 2 });
+            if (peopleUnfollowed % 10 === 0) {
+              logger.log("Have unfollowed 10 users since last break, pausing");
+              await sleep({ minutes: 10 });
             }
           }
         }
@@ -263,7 +263,7 @@ export async function unfollowUser({
     await db.addPrevUnfollowedUser(res);
   }
 
-  await sleep({ seconds: 1 });
+  await sleep({ seconds: 5 });
 
   return res;
 }

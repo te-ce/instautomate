@@ -48,11 +48,11 @@ import { sleep } from "./util/util.ts";
     // Unfollow previously auto-followed users (regardless of whether or not they are following us back)
     // after a certain amount of days (2 weeks)
     // Leave room to do following after this too (unfollow 2/3 of maxFollowsPerDay)
-    const MIN_UNFOLLOW_COUNT = 200;
+    const MIN_UNFOLLOW_COUNT = 20;
     const unfollowedCount = await instauto.unfollowOldFollowed({
       ageInDays: options.unfollowAfterDays,
       limit:
-        MIN_UNFOLLOW_COUNT + Math.floor(options.maxFollowsPerDay * (2 / 3)),
+        MIN_UNFOLLOW_COUNT + Math.floor(options.maxFollowsPerDay * (4 / 3)),
       page: instauto.getPage(),
       db: instautoDb,
       userDataCache: instauto.userDataCache,
