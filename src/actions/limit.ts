@@ -11,16 +11,18 @@ class DailyLimitReachedError extends Error {
   }
 }
 
-const { maxFollowsPerDay, maxLikesPerDay, maxFollowsPerHour } =
+const { maxFollowActionsPerDay, maxLikesPerDay, maxFollowsPerHour } =
   await getOptions();
 
 async function checkReachedFollowedUserDayLimit(db: JsonDB) {
   const currentFollowCount = db.getNumFollowedUsersThisTimeUnit(DAY_IN_MS);
-  logger.log(`Followed ${currentFollowCount}/${maxFollowsPerDay} daily users`);
+  logger.log(
+    `Followed ${currentFollowCount}/${maxFollowActionsPerDay} daily users`,
+  );
 
-  if (currentFollowCount >= maxFollowsPerDay) {
+  if (currentFollowCount >= maxFollowActionsPerDay) {
     throw new DailyLimitReachedError(
-      `Daily follow limit reached: ${currentFollowCount}/${maxFollowsPerDay}`,
+      `Daily follow limit reached: ${currentFollowCount}/${maxFollowActionsPerDay}`,
     );
   }
 }

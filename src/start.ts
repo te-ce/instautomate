@@ -48,11 +48,12 @@ import { sleep } from "./util/util.ts";
     // Unfollow previously auto-followed users (regardless of whether or not they are following us back)
     // after a certain amount of days (2 weeks)
     // Leave room to do following after this too (unfollow 2/3 of maxFollowsPerDay)
-    const MIN_UNFOLLOW_COUNT = 20;
+    const MIN_UNFOLLOW_COUNT = 10;
     const unfollowedCount = await instauto.unfollowOldFollowed({
       ageInDays: options.unfollowAfterDays,
       limit:
-        MIN_UNFOLLOW_COUNT + Math.floor(options.maxFollowsPerDay * (4 / 3)),
+        MIN_UNFOLLOW_COUNT +
+        Math.floor(options.maxFollowActionsPerDay * (2 / 3)),
       page: instauto.getPage(),
       db: instautoDb,
       userDataCache: instauto.userDataCache,
@@ -60,13 +61,10 @@ import { sleep } from "./util/util.ts";
 
     if (unfollowedCount > 0) await sleep({ minutes: 10 });
 
-    // List of usernames that we should follow the followers of, can be celebrities etc.
-    const usersToFollowFollowersOf = options.usersToFollowFollowersOf;
-
     // Now go through each of these and follow a certain amount of their followers
     await instauto.followUsersFollowers({
-      usersToFollowFollowersOf,
-      maxFollowsTotal: options.maxFollowsPerDay - unfollowedCount,
+      usersToFollowFollowersOf: options.usersToFollowFollowersOf,
+      maxFollowsTotal: options.maxFollowActionsPerDay - unfollowedCount,
       skipPrivate: options.skipPrivate,
       enableLikeImages: options.enableLikeImages,
       likeImagesMax: options.maxLikesPerDay,

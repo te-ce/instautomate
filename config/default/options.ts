@@ -16,7 +16,7 @@ export const options: Omit<
   randomizeUserAgent: true,
 
   maxFollowsPerHour: 10,
-  maxFollowsPerDay: 50,
+  maxFollowActionsPerDay: 50,
   maxLikesPerDay: 30,
   skipPrivate: true,
   enableLikeImages: false,
