@@ -247,7 +247,7 @@ export async function unfollowUser({
   if (!dryRun) {
     if (elementHandle) {
       await elementHandle.click();
-      await sleep({ seconds: 1 });
+      await sleep({ seconds: 2 });
       const confirmHandle = await findUnfollowConfirmButton(page);
       if (confirmHandle) await confirmHandle.click();
 
@@ -261,9 +261,10 @@ export async function unfollowUser({
     }
 
     await db.addPrevUnfollowedUser(res);
+    logger.log("Unfollowed user:", username);
   }
 
-  await sleep({ seconds: 5 });
+  await sleep({ minutes: 2 });
 
   return res;
 }
