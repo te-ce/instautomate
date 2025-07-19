@@ -228,7 +228,7 @@ export async function unfollowUser({
   const { dryRun } = await getOptions();
 
   await navigateToUserAndGetData({ username, page, userDataCache });
-  logger.log(`Unfollowing user ${username}`);
+  logger.log(`Unfollowing user ${username}...`);
 
   const res: User = { username, time: new Date().getTime() };
 
@@ -236,10 +236,10 @@ export async function unfollowUser({
   if (!elementHandle) {
     const elementHandle2 = await findFollowButton(page);
     if (elementHandle2) {
-      logger.log("User has been unfollowed already");
+      logger.log("User has been unfollowed already for: ", username);
       res.noActionTaken = true;
     } else {
-      logger.log("Failed to find unfollow button");
+      logger.log("Failed to find unfollow button for: ", username);
       res.noActionTaken = true;
     }
   }
@@ -256,12 +256,15 @@ export async function unfollowUser({
       await checkActionBlocked(page);
 
       const elementHandle2 = await findFollowButton(page);
-      if (!elementHandle2)
-        throw new Error("Unfollow button did not change state");
+      if (!elementHandle2) {
+        throw new Error(
+          `Unfollow button did not change state for: ${username}`,
+        );
+      } else {
+        logger.log("Unfollowed user:", username);
+      }
     }
-
     await db.addPrevUnfollowedUser(res);
-    logger.log("Unfollowed user:", username);
   }
 
   await sleep({ minutes: 2 });
