@@ -6,6 +6,7 @@ import { logger } from "src/util/logger";
 
 export type JsonDB = Awaited<ReturnType<typeof jsonDb>>;
 
+const RESET_HOUR = 24;
 export const jsonDb = async () => {
   const options = await getOptions();
   let prevFollowedUsers: Record<string, User> = {};
@@ -58,7 +59,7 @@ export const jsonDb = async () => {
   }
 
   function getLikedPhotosLastTimeUnit(timeUnit: number) {
-    const now = new Date().getTime();
+    const now = new Date().setHours(RESET_HOUR, 0, 0, 0);
     return prevLikedPhotos.filter((u) => now - u.time < timeUnit);
   }
 
@@ -68,7 +69,7 @@ export const jsonDb = async () => {
   }
 
   function getFollowedLastTimeUnit(timeUnit: number) {
-    const now = new Date().getTime();
+    const now = new Date().setHours(RESET_HOUR, 0, 0, 0);
     return Object.values(prevFollowedUsers).filter(
       (u) => now - u.time < timeUnit,
     );
@@ -80,7 +81,7 @@ export const jsonDb = async () => {
   }
 
   function getUnfollowedLastTimeUnit(timeUnit: number) {
-    const now = new Date().getTime();
+    const now = new Date().setHours(RESET_HOUR, 0, 0, 0);
     return Object.values(prevUnfollowedUsers).filter(
       (u) => now - u.time < timeUnit,
     );
@@ -92,7 +93,7 @@ export const jsonDb = async () => {
   }
 
   function getNumFollowedUsersThisTimeUnit(timeUnit: number) {
-    const now = new Date().getTime();
+    const now = new Date().setHours(RESET_HOUR, 0, 0, 0);
 
     return (
       getFollowedLastTimeUnit(timeUnit).length +
