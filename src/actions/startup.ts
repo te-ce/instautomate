@@ -153,14 +153,4 @@ export const startup = async (
   logger.log(
     `Have liked ${getLikedPhotosLastTimeUnit(DAY_IN_MS).length} images in the last 24 hours`,
   );
-
-  // TODO: Probably is not needed since we always have the username from login options
-  // try {
-  //   const detectedUsername = await page.evaluate(
-  //     () => (window as any)._sharedData.config.viewer.username,
-  //   );
-  //   if (detectedUsername) username = detectedUsername;
-  // } catch (err) {
-  //   logger.error("Failed to detect username", err);
-  // }
 };
