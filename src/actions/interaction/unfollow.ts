@@ -185,7 +185,7 @@ export async function safelyUnfollowUsers({
 
             if (peopleUnfollowed % 10 === 0) {
               logger.log("Have unfollowed 10 users since last break, pausing");
-              await sleep({ minutes: 4 });
+              await sleep({ minutes: 3 });
             }
           }
         }
@@ -267,7 +267,7 @@ export async function unfollowUser({
     await db.addPrevUnfollowedUser(res);
   }
 
-  await sleep({ minutes: 2 });
+  await sleep({ minutes: 1 });
 
   return res;
 }

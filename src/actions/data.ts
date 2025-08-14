@@ -269,7 +269,7 @@ export async function processUsersFollowers({
         userDataCache,
       });
 
-      await sleep({ minutes: 3 });
+      await sleep({ minutes: 2 });
       await throttle(db);
     } catch (err) {
       if (err instanceof Error && err.name === "DailyLimitReachedError") {
@@ -282,7 +282,7 @@ export async function processUsersFollowers({
         err,
       );
       await takeScreenshot(page);
-      await sleep({ seconds: 60 });
+      await sleep({ minutes: 1 });
     }
   }
 }

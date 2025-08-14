@@ -109,7 +109,7 @@ export const startup = async (
     if (!(await isLoggedIn(page))) {
       logger.log("Still not logged in, trying to reload loading page");
       await page.reload();
-      await sleep({ seconds: 60 });
+      await sleep({ minutes: 1 });
     }
 
     let warnedAboutLoginFail = false;
