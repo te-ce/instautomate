@@ -23,10 +23,12 @@ export function escapeXpathStr(str: string) {
 const sleepFixed = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-const sleepWithDeviation = (ms: number, deviation = 1) => {
-  const msWithDeviation = (Math.random() * deviation + 1) * ms;
-  logger.log("Waiting", formatMs(msWithDeviation), "...");
-  return sleepFixed(msWithDeviation);
+const sleepWithDeviation = (ms: number) => {
+  const deviation = ms * 0.1 * (2 * Math.random() - 1);
+  const secondsDeviation = deviation % 60;
+  const sleep = secondsDeviation * ms;
+  logger.log("Waiting", formatMs(sleep), "...");
+  return sleepFixed(sleep);
 };
 
 export const sleep = ({
