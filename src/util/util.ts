@@ -26,7 +26,7 @@ const sleepFixed = (ms: number) =>
 const sleepWithDeviation = (ms: number) => {
   const deviation = ms * 0.2 * (2 * Math.random() - 1);
   const secondsDeviation = deviation % 60;
-  const sleep = secondsDeviation * ms;
+  const sleep = ms + secondsDeviation;
   logger.log("Waiting", formatMs(sleep), "...");
   return sleepFixed(sleep);
 };
