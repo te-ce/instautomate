@@ -15,7 +15,7 @@ const { maxFollowActionsPerDay, maxLikesPerDay, maxFollowsPerHour } =
   await getOptions();
 
 async function checkReachedFollowedUserDayLimit(db: JsonDB) {
-  const currentFollowCount = db.getNumFollowedUsersThisTimeUnit(DAY_IN_MS);
+  const currentFollowCount = db.getNumFollowedUsersThisTimeUnit(DAY_IN_MS, 24);
   logger.log(
     `Followed ${currentFollowCount}/${maxFollowActionsPerDay} daily users`,
   );
@@ -28,14 +28,15 @@ async function checkReachedFollowedUserDayLimit(db: JsonDB) {
 }
 
 async function checkReachedFollowedUserHourLimit(db: JsonDB) {
-  if (db.getNumFollowedUsersThisTimeUnit(HOUR_IN_MS) >= maxFollowsPerHour) {
+  const currentHour = new Date().getHours();
+  if (db.getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, currentHour) >= maxFollowsPerHour) {
     logger.log("Have reached hourly follow rate limit, pausing 10 min");
     await sleep({ minutes: 10 });
   }
 }
 
 async function checkReachedLikedUserDayLimit(db: JsonDB) {
-  const currentLikesCount = db.getLikedPhotosLastTimeUnit(DAY_IN_MS).length;
+  const currentLikesCount = db.getLikedPhotosLastTimeUnit(DAY_IN_MS, 24).length;
   logger.log(`Liked ${currentLikesCount}/${maxLikesPerDay} daily pictures`);
 
   if (currentLikesCount >= maxLikesPerDay) {

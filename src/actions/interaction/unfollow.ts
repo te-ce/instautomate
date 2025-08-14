@@ -21,7 +21,7 @@ import {
   getFollowersOrFollowingGenerator,
   navigateToUserAndGetData,
 } from "../data";
-import { DAY_IN_MS, MIN_IN_S } from "src/util/const";
+import { DAY_IN_MS } from "src/util/const";
 
 export async function unfollowAllUnknown({
   limit,

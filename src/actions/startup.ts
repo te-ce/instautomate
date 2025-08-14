@@ -145,12 +145,12 @@ export const startup = async (
   await trySaveCookies(browser);
 
   logger.log(
-    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(HOUR_IN_MS)} in the last hour`,
+    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, new Date().getHours())} in the last hour`,
   );
   logger.log(
-    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(DAY_IN_MS)} in the last 24 hours`,
+    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(DAY_IN_MS, 24)} in the last 24 hours`,
   );
   logger.log(
-    `Have liked ${getLikedPhotosLastTimeUnit(DAY_IN_MS).length} images in the last 24 hours`,
+    `Have liked ${getLikedPhotosLastTimeUnit(DAY_IN_MS, 24).length} images in the last 24 hours`,
   );
 };
