@@ -33,7 +33,7 @@ export async function followUserRespectingRestrictions({
     followUserRatioMin,
     followUserFilterFn,
   } = await getOptions();
-  if (db.prevFollowedUsers[username]) {
+  if (db.prevFollowedUsers[username] || db.prevUnfollowedUsers[username]) {
     logger.log("Skipping already followed user", username);
     return false;
   }
