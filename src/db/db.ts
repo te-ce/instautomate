@@ -88,10 +88,14 @@ export const jsonDb = async () => {
 
   async function addPrevUnfollowedUser(user: User) {
     prevUnfollowedUsers[user.username] = user;
+    delete prevFollowedUsers[user.username];
     await trySaveDb();
   }
 
-  function getNumFollowedUsersThisTimeUnit(timeUnit: number, resetHour: number) {
+  function getNumFollowedUsersThisTimeUnit(
+    timeUnit: number,
+    resetHour: number,
+  ) {
     const now = new Date().setHours(resetHour, 0, 0, 0);
 
     return (
