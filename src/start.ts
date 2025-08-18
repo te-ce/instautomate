@@ -73,11 +73,9 @@ import { sleep } from "./util/util.ts";
       userDataCache: instauto.userDataCache,
     });
 
-    await sleep({ minutes: 10 });
-
     console.log("Done running");
 
-    await sleep({ seconds: 30 });
+    await sleep({ seconds: 10 });
   } catch (err) {
     console.error(err);
   } finally {
