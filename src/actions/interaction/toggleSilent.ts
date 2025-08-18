@@ -4,7 +4,11 @@ import { sleep } from "src/util/util";
 import { navigateToUser } from "../navigation";
 import { findUnfollowButton, findFollowButton } from "../locator";
 
-export async function toggleUserSilentMode(page: Page, username: string) {
+export async function toggleMuteUser(
+  page: Page,
+  username: string,
+  mute: boolean,
+) {
   await navigateToUser(page, username);
 
   const unfollowButton = await findUnfollowButton(page);
@@ -24,7 +28,6 @@ export async function toggleUserSilentMode(page: Page, username: string) {
 
   await unfollowButton?.click();
   await sleep({ seconds: 2 });
-  await muteStoriesValue(page);
   const muteSectionButton = await page.$$(`xpath///span[text()='Mute']`);
 
   if (!muteSectionButton) {
@@ -33,54 +36,51 @@ export async function toggleUserSilentMode(page: Page, username: string) {
   }
 
   await muteSectionButton[0].click();
-  await sleep({ seconds: 2 });
+  await sleep({ seconds: 1 });
 
-  const mutePostsButton = await page.$$(`xpath///span[text()='Posts']`);
   const muteStoriesButton = await page.$$(`xpath///span[text()='Stories']`);
 
-  if (mutePostsButton.length > 0 && muteStoriesButton.length > 0) {
-    logger.log("muting posts and stories");
-    await mutePostsButton[0].click();
-    await sleep({ seconds: 1 });
-    await muteStoriesButton[0].click();
-    await sleep({ seconds: 1 });
-  } else {
-    logger.log("Can't find mute posts/stories button");
+  const { arePostsMuted, areStoriesMuted } = await muteValues(page);
+
+  if (arePostsMuted !== mute) {
+    const mutePostsButton = await page.$$(`xpath///span[text()='Posts']`);
+
+    if (mutePostsButton.length > 0) {
+      await mutePostsButton[0].click();
+      await sleep({ seconds: 1 });
+    }
+  }
+
+  if (areStoriesMuted !== mute) {
+    if (muteStoriesButton.length > 0) {
+      await muteStoriesButton[0].click();
+      await sleep({ seconds: 1 });
+    }
+  }
+
+  const saveButton = await page.$$(`xpath///div[text()='Save']`);
+
+  if (saveButton.length > 0) {
+    await saveButton[0].click();
+    await sleep({ seconds: 2 });
   }
 }
 
-const muteStoriesValue = async (page: Page) => {
-  // Find the checkbox near the "Posts" text
-  const ariaChecked = await page.evaluate(() => {
-    // Locate the span with "Posts" text
-    const postsSpan = Array.from(document.querySelectorAll("span")).find(
-      (span) => span?.textContent?.trim() === "Posts",
-    );
+const muteValues = async (page: Page) => {
+  const checkedValues = await page.$$eval(
+    'input[type="checkbox"], input[type="radio"]',
+    (inputs) =>
+      inputs
+        .map((input) => ({
+          name: input.name || "unnamed",
+          type: input.type,
+          checked: input.checked,
+        }))
+        .filter((input) => input.type === "checkbox"),
+  );
 
-    if (!postsSpan) {
-      return null; // couldn't find Posts text
-    }
+  const arePostsMuted = checkedValues[0].checked;
+  const areStoriesMuted = checkedValues[1].checked;
 
-    // Traverse upwards to find a common container
-    const container = postsSpan.closest("div");
-
-    if (!container) {
-      return null; // couldn't find container
-    }
-
-    // Now find the checkbox input within the container or nearby
-    const checkbox = container.querySelector('input[type="checkbox"]');
-
-    if (checkbox) {
-      return checkbox.getAttribute("aria-checked");
-    }
-
-    return null; // checkbox not found
-  });
-
-  const StoriesChecked =
-    ariaChecked === "true" ? true : ariaChecked === "false" ? false : undefined;
-
-  logger.log(`mute Stories value: ${StoriesChecked}`);
-  return StoriesChecked;
+  return { arePostsMuted, areStoriesMuted };
 };
