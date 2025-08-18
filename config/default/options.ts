@@ -20,6 +20,7 @@ export const options: Omit<
   maxLikesPerDay: 30,
   skipPrivate: true,
   enableLikeImages: false,
+  muteUsers: false,
 
   followUserRatioMin: 0.2,
   followUserRatioMax: 4.0,

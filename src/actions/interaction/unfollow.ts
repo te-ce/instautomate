@@ -22,6 +22,7 @@ import {
   navigateToUserAndGetData,
 } from "../data";
 import { DAY_IN_MS } from "src/util/const";
+import { toggleMuteUser } from "./toggleSilent";
 
 export async function unfollowAllUnknown({
   limit,
@@ -225,7 +226,7 @@ export async function unfollowUser({
   db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
-  const { dryRun } = await getOptions();
+  const { dryRun, muteUsers } = await getOptions();
 
   await navigateToUserAndGetData({ username, page, userDataCache });
   logger.log(`Unfollowing user ${username}...`);
@@ -264,6 +265,11 @@ export async function unfollowUser({
         logger.log("Unfollowed user:", username);
       }
     }
+
+    if (muteUsers) {
+      await toggleMuteUser(page, username, false);
+    }
+
     await db.addPrevUnfollowedUser(res);
   }
 

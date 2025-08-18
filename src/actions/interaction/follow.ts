@@ -9,6 +9,7 @@ import { takeScreenshot } from "../screenshot";
 import { findFollowButton, findUnfollowButton } from "../locator";
 import { User } from "src/util/types";
 import { navigateToUserAndGetData } from "../data";
+import { toggleMuteUser } from "./toggleSilent";
 
 export async function followUserRespectingRestrictions({
   username,
@@ -151,7 +152,7 @@ export async function followUser({
   userDataCache: Record<string, User>;
   db: JsonDB;
 }) {
-  const { dryRun } = await getOptions();
+  const { dryRun, muteUsers } = await getOptions();
   await navigateToUserAndGetData({ username, page, userDataCache });
   const unfollowButton = await findUnfollowButton(page);
 
@@ -183,7 +184,9 @@ export async function followUser({
 
     await db.addPrevFollowedUser(entry);
 
-    // await toggleUserSilentMode(page, username);
+    if (muteUsers) {
+      await toggleMuteUser(page, username, true);
+    }
 
     if (!unfollowButton) {
       logger.log("Button did not change state - Sleeping 1 min");
