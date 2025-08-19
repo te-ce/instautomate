@@ -247,6 +247,10 @@ export async function unfollowUser({
 
   if (!dryRun) {
     if (elementHandle) {
+      if (muteUsers) {
+        await toggleMuteUser(page, username, false);
+      }
+
       await elementHandle.click();
       await sleep({ seconds: 2 });
       const confirmHandle = await findUnfollowConfirmButton(page);
@@ -264,10 +268,6 @@ export async function unfollowUser({
       } else {
         logger.log("Unfollowed user:", username);
       }
-    }
-
-    if (muteUsers) {
-      await toggleMuteUser(page, username, false);
     }
 
     await db.addPrevUnfollowedUser(res);

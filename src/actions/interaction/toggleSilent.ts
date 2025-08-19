@@ -47,22 +47,27 @@ export async function toggleMuteUser(
 
     if (mutePostsButton.length > 0) {
       await mutePostsButton[0].click();
-      await sleep({ seconds: 1 });
     }
   }
 
   if (areStoriesMuted !== mute) {
     if (muteStoriesButton.length > 0) {
       await muteStoriesButton[0].click();
-      await sleep({ seconds: 1 });
     }
   }
 
   const saveButton = await page.$$(`xpath///div[text()='Save']`);
+  const closeButton = await page.$$('svg[aria-label="Close"]');
 
   if (saveButton.length > 0) {
     await saveButton[0].click();
     await sleep({ seconds: 2 });
+  }
+
+  logger.log(`Toggled mute of ${username} to ${mute}`);
+
+  if (closeButton.length > 0) {
+    await closeButton[0].click();
   }
 }
 
