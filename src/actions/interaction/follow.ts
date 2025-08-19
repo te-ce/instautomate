@@ -35,6 +35,12 @@ export async function followUserRespectingRestrictions({
   } = await getOptions();
   if (db.prevFollowedUsers[username] || db.prevUnfollowedUsers[username]) {
     logger.log("Skipping already followed user", username);
+
+    await db.addPrevUnfollowedUser({
+      username,
+      time: new Date().getTime(),
+      href: "",
+    });
     return false;
   }
 
