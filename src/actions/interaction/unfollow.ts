@@ -226,17 +226,17 @@ export async function unfollowUser({
   db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
-  const { dryRun, muteUsers } = await getOptions();
+  const { dryRun } = await getOptions();
 
   await navigateToUserAndGetData({ username, page, userDataCache });
   logger.log(`Unfollowing user ${username}...`);
 
   const res: User = { username, time: new Date().getTime() };
 
-  const elementHandle = await findUnfollowButton(page);
-  if (!elementHandle) {
-    const elementHandle2 = await findFollowButton(page);
-    if (elementHandle2) {
+  const unfollowButton = await findUnfollowButton(page);
+  if (!unfollowButton) {
+    const followButton = await findFollowButton(page);
+    if (followButton) {
       logger.log("User has been unfollowed already for: ", username);
       res.noActionTaken = true;
     } else {
@@ -246,12 +246,10 @@ export async function unfollowUser({
   }
 
   if (!dryRun) {
-    if (elementHandle) {
-      if (muteUsers) {
-        await toggleMuteUser(page, username, false);
-      }
+    if (unfollowButton) {
 
-      await elementHandle.click();
+      await toggleMuteUser(page, username, false);
+      await unfollowButton.click();
       await sleep({ seconds: 2 });
       const confirmHandle = await findUnfollowConfirmButton(page);
       if (confirmHandle) await confirmHandle.click();
