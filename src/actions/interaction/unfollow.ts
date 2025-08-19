@@ -273,7 +273,7 @@ export async function unfollowUser({
     await db.addPrevUnfollowedUser(res);
   }
 
-  await sleep({ minutes: 1 });
+  await sleep({ seconds: 15 });
 
   return res;
 }
