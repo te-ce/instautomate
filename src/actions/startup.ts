@@ -18,6 +18,16 @@ export const startup = async (
   const { randomizeUserAgent, enableCookies, password, username } = options;
   const { getNumFollowedUsersThisTimeUnit, getLikedPhotosLastTimeUnit } = db;
 
+  logger.log("");
+  logger.log("");
+  logger.log("__STARTING UP__");
+  logger.log(`Current day: ${new Date().toLocaleDateString()}`);
+  logger.log(`Current time: ${new Date().toLocaleTimeString()}`);
+  logger.log(`Username: ${username}`);
+  logger.log("____");
+  logger.log("");
+  logger.log("");
+
   // https://github.com/mifi/SimpleInstaBot/issues/118#issuecomment-1067883091
   await page.setExtraHTTPHeaders({ "Accept-Language": "en" });
 

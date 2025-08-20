@@ -3,6 +3,7 @@ import puppeteer from "puppeteer";
 import { Instauto } from "./bot.ts";
 import { getOptions } from "./util/options.ts";
 import { sleep } from "./util/util.ts";
+import { logger } from "./util/logger.ts";
 
 (async () => {
   let browser;
@@ -73,13 +74,21 @@ import { sleep } from "./util/util.ts";
       userDataCache: instauto.userDataCache,
     });
 
-    console.log("Done running");
-
-    await sleep({ seconds: 10 });
+    logger.log("Finalizing...");
   } catch (err) {
-    console.error(err);
+    logger.error(err);
   } finally {
-    console.log("Closing browser");
+    logger.log("Closing browser");
     if (browser) await browser.close();
+
+    logger.log("");
+    logger.log("");
+    logger.log("__FINISHED__");
+    logger.log(`Current day: ${new Date().toLocaleDateString()}`);
+    logger.log(`Current time: ${new Date().toLocaleTimeString()}`);
+    logger.log(`Username: ${options.username}`);
+    logger.log("____");
+    logger.log("");
+    logger.log("");
   }
 })();
