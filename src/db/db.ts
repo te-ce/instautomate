@@ -11,6 +11,7 @@ export const jsonDb = async () => {
   let prevFollowedUsers: Record<string, User> = {};
   let prevUnfollowedUsers: Record<string, User> = {};
   let prevLikedPhotos: User[] = [];
+  const startTime = new Date();
 
   async function trySaveDb() {
     try {
@@ -120,5 +121,6 @@ export const jsonDb = async () => {
     prevUnfollowedUsers,
     prevLikedPhotos,
     getNumFollowedUsersThisTimeUnit,
+    startTime,
   };
 };

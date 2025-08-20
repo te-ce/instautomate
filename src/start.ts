@@ -2,8 +2,9 @@ import puppeteer from "puppeteer";
 
 import { Instauto } from "./bot.ts";
 import { getOptions } from "./util/options.ts";
-import { sleep } from "./util/util.ts";
+import { formatMs, getDurationFormatted, sleep } from "./util/util.ts";
 import { logger } from "./util/logger.ts";
+import { jsonDb } from "./db/db.ts";
 
 (async () => {
   let browser;
@@ -74,21 +75,19 @@ import { logger } from "./util/logger.ts";
       userDataCache: instauto.userDataCache,
     });
 
-    logger.log("Finalizing...");
-  } catch (err) {
-    logger.error(err);
-  } finally {
-    logger.log("Closing browser");
-    if (browser) await browser.close();
-
     logger.log("");
     logger.log("");
     logger.log("__FINISHED__");
     logger.log(`Current day: ${new Date().toLocaleDateString()}`);
     logger.log(`Current time: ${new Date().toLocaleTimeString()}`);
     logger.log(`Username: ${options.username}`);
-    logger.log("____");
+    logger.log(`Duration: ${getDurationFormatted(instautoDb)}`);
     logger.log("");
     logger.log("");
+  } catch (err) {
+    logger.error(err);
+  } finally {
+    logger.log("Closing browser");
+    if (browser) await browser.close();
   }
 })();

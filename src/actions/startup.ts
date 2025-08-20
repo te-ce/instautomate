@@ -18,11 +18,13 @@ export const startup = async (
   const { randomizeUserAgent, enableCookies, password, username } = options;
   const { getNumFollowedUsersThisTimeUnit, getLikedPhotosLastTimeUnit } = db;
 
+  db.startTime = new Date();
+
   logger.log("");
   logger.log("");
   logger.log("__STARTING UP__");
-  logger.log(`Current day: ${new Date().toLocaleDateString()}`);
-  logger.log(`Current time: ${new Date().toLocaleTimeString()}`);
+  logger.log(`Current day: ${db.startTime.toLocaleDateString()}`);
+  logger.log(`Current time: ${db.startTime.toLocaleTimeString()}`);
   logger.log(`Username: ${username}`);
   logger.log("____");
   logger.log("");
