@@ -167,7 +167,8 @@ export async function processUserFollowers({
   })) {
     logger.log("User followers batch", followersBatch);
 
-    for (const follower of followersBatch) {
+    const shuffledFollowers = shuffleArray(followersBatch);
+    for (const follower of shuffledFollowers) {
       await throttle(db);
 
       try {
