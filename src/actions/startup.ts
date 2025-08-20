@@ -22,11 +22,10 @@ export const startup = async (
 
   logger.log("");
   logger.log("");
-  logger.log("__STARTING UP__");
+  logger.log("== STARTING UP ==");
   logger.log(`Current day: ${db.startTime.toLocaleDateString()}`);
   logger.log(`Current time: ${db.startTime.toLocaleTimeString()}`);
   logger.log(`Username: ${username}`);
-  logger.log("____");
   logger.log("");
   logger.log("");
 

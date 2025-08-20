@@ -77,11 +77,11 @@ import { jsonDb } from "./db/db.ts";
 
     logger.log("");
     logger.log("");
-    logger.log("__FINISHED__");
+    logger.log("== FINISHED ==");
     logger.log(`Current day: ${new Date().toLocaleDateString()}`);
     logger.log(`Current time: ${new Date().toLocaleTimeString()}`);
     logger.log(`Username: ${options.username}`);
-    logger.log(`Duration: ${getDurationFormatted(instautoDb)}`);
+    logger.log(`Duration: ${getDurationFormatted(await Instauto.jsonDb())}`);
     logger.log("");
     logger.log("");
   } catch (err) {
