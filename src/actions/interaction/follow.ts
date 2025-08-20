@@ -206,5 +206,5 @@ export async function followUser({
     }
   }
 
-  await sleep({ seconds: 1 });
+  await sleep({ seconds: 1, silent: true });
 }

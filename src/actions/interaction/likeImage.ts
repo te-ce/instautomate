@@ -41,7 +41,7 @@ export async function likeCurrentUserImagesPageCode({
   for (const image of images) {
     await image.click();
 
-    await sleep({ seconds: 3 });
+    await sleep({ seconds: 3, silent: true });
 
     const dialog = document.querySelector("*[role=dialog]");
 
@@ -127,7 +127,7 @@ export async function likeCurrentUserImagesPageCode({
       likeImage();
     }
 
-    await sleep({ seconds: 3 });
+    await sleep({ seconds: 3, silent: true });
 
     const closeButtonChild = document.querySelector('svg[aria-label="Close"]');
 
@@ -140,7 +140,7 @@ export async function likeCurrentUserImagesPageCode({
 
     closeButton.click();
 
-    await sleep({ seconds: 5 });
+    await sleep({ seconds: 5, silent: true });
   }
 
   logger.log("Done liking images");

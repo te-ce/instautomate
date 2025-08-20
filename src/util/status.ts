@@ -28,7 +28,7 @@ export async function checkActionBlocked(page: Page) {
     const hours = 3;
     logger.error(`Action Blocked, waiting ${hours} hours...`);
     await tryDeleteCookies();
-    await sleep({ hours });
+    await sleep({ hours, silent: true });
     throw new Error("Aborted operation due to action blocked");
   }
 }

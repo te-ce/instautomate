@@ -34,7 +34,7 @@ async function checkReachedFollowedUserHourLimit(db: JsonDB) {
     maxFollowsPerHour
   ) {
     logger.log("Hourly follow rate limit reached, pausing 10 min.");
-    await sleep({ minutes: 10 });
+    await sleep({ minutes: 10, silent: true });
     return checkReachedFollowedUserHourLimit(db);
   }
 }

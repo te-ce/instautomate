@@ -169,7 +169,7 @@ export async function safelyUnfollowUsers({
             time: new Date().getTime(),
             noActionTaken: true,
           });
-          await sleep({ seconds: 3 });
+          await sleep({ seconds: 3, silent: true });
         } else {
           const { noActionTaken } = await unfollowUser({
             username,
@@ -179,7 +179,7 @@ export async function safelyUnfollowUsers({
           });
 
           if (noActionTaken) {
-            await sleep({ seconds: 5 });
+            await sleep({ seconds: 5, silent: true });
           } else {
             await sleep({ seconds: 15 });
             peopleUnfollowed += 1;
@@ -250,11 +250,11 @@ export async function unfollowUser({
 
       await toggleMuteUser(page, username, false);
       await unfollowButton.click();
-      await sleep({ seconds: 2 });
+      await sleep({ seconds: 2, silent: true });
       const confirmHandle = await findUnfollowConfirmButton(page);
       if (confirmHandle) await confirmHandle.click();
 
-      await sleep({ seconds: 5 });
+      await sleep({ seconds: 5, silent: true });
 
       await checkActionBlocked(page);
 

@@ -36,7 +36,7 @@ export async function gotoWithRetry(page: Page, url: string) {
     const response = await gotoUrl(page, url);
     const status = response?.status();
     logger.log("Page loaded");
-    await sleep({ seconds: 2 });
+    await sleep({ seconds: 2, silent: true });
 
     // https://www.reddit.com/r/Instagram/comments/kwrt0s/error_560/
     // https://github.com/mifi/instauto/issues/60

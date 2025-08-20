@@ -23,11 +23,11 @@ export function escapeXpathStr(str: string) {
 const sleepFixed = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-const sleepWithDeviation = (ms: number) => {
+const sleepWithDeviation = (ms: number, silent?: boolean) => {
   const deviation = ms * 0.2 * (2 * Math.random() - 1);
   const secondsDeviation = deviation % 60;
   const sleep = ms + secondsDeviation;
-  logger.log("Waiting", formatMs(sleep), "...");
+  if (!silent) logger.log("Waiting", formatMs(sleep), "...");
   return sleepFixed(sleep);
 };
 
@@ -35,14 +35,16 @@ export const sleep = ({
   seconds = 0,
   minutes = 0,
   hours = 0,
+  silent = false,
 }: {
   seconds?: number;
   minutes?: number;
   hours?: number;
+  silent?: boolean;
 }) => {
   const ms =
     seconds * SECOND_IN_MS + minutes * MINUTE_IN_MS + hours * HOUR_IN_MS;
-  return sleepWithDeviation(ms);
+  return sleepWithDeviation(ms, silent);
 };
 
 const formatMs = (ms: number) => {

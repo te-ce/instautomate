@@ -27,7 +27,7 @@ export async function toggleMuteUser(
   }
 
   await unfollowButton?.click();
-  await sleep({ seconds: 2 });
+  await sleep({ seconds: 2, silent: true });
   const muteSectionButton = await page.$$(`xpath///span[text()='Mute']`);
 
   if (!muteSectionButton) {
@@ -36,7 +36,7 @@ export async function toggleMuteUser(
   }
 
   await muteSectionButton[0].click();
-  await sleep({ seconds: 1 });
+  await sleep({ seconds: 1, silent: true });
 
   const muteStoriesButton = await page.$$(`xpath///span[text()='Stories']`);
 
@@ -61,12 +61,11 @@ export async function toggleMuteUser(
 
   if (saveButton.length > 0) {
     await saveButton[0].click();
-    await sleep({ seconds: 2 });
+    await sleep({ seconds: 2, silent: true });
     logger.log(`Toggled mute of ${username} to ${mute}`);
   } else {
     logger.log(`Failed to save mute of ${username} to ${mute}`);
   }
-
 
   if (closeButton.length > 0) {
     await closeButton[0].click();

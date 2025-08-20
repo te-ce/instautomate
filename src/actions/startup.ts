@@ -42,7 +42,7 @@ export const startup = async (
   }
 
   await goHome(page);
-  await sleep({ seconds: 1 });
+  await sleep({ seconds: 1, silent: true });
 
   await tryPressButton(
     await page.$$('xpath///button[contains(text(), "Allow all cookies")]'),
@@ -77,7 +77,7 @@ export const startup = async (
 
     try {
       await page.click('a[href="/accounts/login/?source=auth_switcher"]');
-      await sleep({ seconds: 1 });
+      await sleep({ seconds: 1, silent: true });
     } catch (err) {
       logger.info("No login page button, assuming we are on login form", err);
     }
@@ -89,9 +89,9 @@ export const startup = async (
     );
 
     await page.type('input[name="username"]', username, { delay: 50 });
-    await sleep({ seconds: 1 });
+    await sleep({ seconds: 1, silent: true });
     await page.type('input[name="password"]', password, { delay: 50 });
-    await sleep({ seconds: 1 });
+    await sleep({ seconds: 1, silent: true });
 
     for (;;) {
       const didClickLogin = await tryClickLogin();
@@ -119,11 +119,11 @@ export const startup = async (
           'WARNING: Login has not succeeded. This could be because of an incorrect username/password, or a "suspicious login attempt"-message. You need to manually complete the process, or if really logged in, click the Instagram logo in the top left to go to the Home page.',
         );
       warnedAboutLoginFail = true;
-      await sleep({ seconds: 5 });
+      await sleep({ seconds: 5, silent: true });
     }
 
     await goHome(page);
-    await sleep({ seconds: 1 });
+    await sleep({ seconds: 1, silent: true });
 
     // Mobile version https://github.com/mifi/SimpleInstaBot/issues/7
     await tryPressButton(
