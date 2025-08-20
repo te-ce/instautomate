@@ -29,9 +29,13 @@ async function checkReachedFollowedUserDayLimit(db: JsonDB) {
 
 async function checkReachedFollowedUserHourLimit(db: JsonDB) {
   const currentHour = new Date().getHours();
-  if (db.getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, currentHour) >= maxFollowsPerHour) {
-    logger.log("Have reached hourly follow rate limit, pausing 10 min");
+  if (
+    db.getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, currentHour) >=
+    maxFollowsPerHour
+  ) {
+    logger.log("Hourly follow rate limit reached, pausing 10 min.");
     await sleep({ minutes: 10 });
+    return checkReachedFollowedUserHourLimit(db);
   }
 }
 
