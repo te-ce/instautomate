@@ -62,9 +62,11 @@ export async function toggleMuteUser(
   if (saveButton.length > 0) {
     await saveButton[0].click();
     await sleep({ seconds: 2 });
+    logger.log(`Toggled mute of ${username} to ${mute}`);
+  } else {
+    logger.log(`Failed to save mute of ${username} to ${mute}`);
   }
 
-  logger.log(`Toggled mute of ${username} to ${mute}`);
 
   if (closeButton.length > 0) {
     await closeButton[0].click();

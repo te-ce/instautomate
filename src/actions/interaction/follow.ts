@@ -185,14 +185,19 @@ export async function followUser({
     const unfollowButton = await findUnfollowButton(page);
 
     // Don't want to retry this user over and over in case there is an issue https://github.com/mifi/instauto/issues/33#issuecomment-723217177
-    const entry: User = { username, time: new Date().getTime(), href: "" };
+    const entry: User = {
+      username,
+      time: new Date().getTime(),
+      href: "",
+      isMuted: muteUsers,
+    };
     if (!unfollowButton) entry.failed = true;
-
-    await db.addPrevFollowedUser(entry);
 
     if (muteUsers) {
       await toggleMuteUser(page, username, true);
     }
+
+    await db.addPrevFollowedUser(entry);
 
     if (!unfollowButton) {
       logger.log("Button did not change state - Sleeping 1 min");
