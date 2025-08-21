@@ -4,9 +4,18 @@ import { User } from "src/util/types";
 import { getOptions } from "../util/options";
 import { logger } from "src/util/logger";
 
-export type JsonDB = Awaited<ReturnType<typeof jsonDb>>;
+export type JsonDB = Awaited<ReturnType<typeof initJsonDb>>;
 
-export const jsonDb = async () => {
+let jsonDb: JsonDB | null = null;
+
+export const getJsonDb = async () => {
+  if (jsonDb === null) {
+    jsonDb = await initJsonDb();
+  }
+  return jsonDb;
+};
+
+export const initJsonDb = async () => {
   const options = await getOptions();
   let prevFollowedUsers: Record<string, User> = {};
   let prevUnfollowedUsers: Record<string, User> = {};

@@ -3,7 +3,16 @@ import fs from "fs";
 import path from "path";
 import { Options, OptionsSchema } from "./types.js";
 
-export const getOptions = async (): Promise<Options> => {
+let options: Options | null = null;
+
+export const getOptions = async () => {
+  if (options === null) {
+    options = await initOptions();
+  }
+  return options;
+};
+
+export const initOptions = async () => {
   const basePath = "./config";
   const args = process.argv.slice(2);
 
@@ -35,9 +44,9 @@ export const getOptions = async (): Promise<Options> => {
     }
 
     const optionsModule = await import(optionsPath);
-    const options = optionsModule.options;
+    const importedOptions = optionsModule.options;
 
-    let headless = options.headless;
+    let headless = importedOptions.headless;
     if (args.includes("headless")) {
       headless = true;
     }
@@ -46,7 +55,7 @@ export const getOptions = async (): Promise<Options> => {
     }
 
     const optionsWithPaths: Options = {
-      ...options,
+      ...importedOptions,
       password,
       cookiesPath: path.join(basePath, env, "cookies.json"),
       followedDbPath: path.join(basePath, env, "followed.json"),
@@ -56,7 +65,8 @@ export const getOptions = async (): Promise<Options> => {
       headless,
     };
 
-    return OptionsSchema.parse(optionsWithPaths);
+    options = OptionsSchema.parse(optionsWithPaths);
+    return options;
   } catch (error) {
     logger.error(`Error loading options from ${optionsPath}:`, error);
     throw error;

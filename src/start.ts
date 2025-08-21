@@ -2,9 +2,8 @@ import puppeteer from "puppeteer";
 
 import { Instauto } from "./bot.ts";
 import { getOptions } from "./util/options.ts";
-import { formatMs, getDurationFormatted, sleep } from "./util/util.ts";
+import { getDurationFormatted, sleep } from "./util/util.ts";
 import { logger } from "./util/logger.ts";
-import { jsonDb } from "./db/db.ts";
 
 (async () => {
   let browser;
@@ -37,7 +36,7 @@ import { jsonDb } from "./db/db.ts";
     });
 
     // Create a database where state will be loaded/saved to
-    const instautoDb = await Instauto.jsonDb();
+    const instautoDb = await Instauto.getJsonDb();
 
     const instauto = await Instauto(instautoDb, browser);
 

@@ -1,6 +1,4 @@
-import assert from "assert";
-import { jsonDb, JsonDB } from "./db/db.ts";
-import { BOT_WORK_SHIFT_HOURS } from "./util/const.ts";
+import { getJsonDb, JsonDB } from "./db/db.ts";
 import { Browser } from "puppeteer";
 import { getOptions } from "./util/options.ts";
 import { User } from "./util/types.ts";
@@ -72,6 +70,6 @@ export const Instauto = async (db: JsonDB, browser: Browser) => {
   };
 };
 
-Instauto.jsonDb = jsonDb;
+Instauto.getJsonDb = getJsonDb;
 
 export default Instauto;
