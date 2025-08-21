@@ -163,7 +163,7 @@ export async function safelyUnfollowUsers({
 
         if (!userFound) {
           // to avoid repeatedly unfollowing failed users, flag them as already unfollowed
-          logger.log("User not found for unfollow");
+          logger.log(` ${username} not found for unfollow`);
           await db.addPrevUnfollowedUser({
             username,
             time: new Date().getTime(),
@@ -203,7 +203,7 @@ export async function safelyUnfollowUsers({
 
         await throttle(db);
       } catch (err) {
-        logger.error("Failed to unfollow, continuing with next", err);
+        logger.error(`Failed to unfollow ${username}, continuing with next`, err);
       }
     }
   }
@@ -237,10 +237,10 @@ export async function unfollowUser({
   if (!unfollowButton) {
     const followButton = await findFollowButton(page);
     if (followButton) {
-      logger.log("User has been unfollowed already for: ", username);
+      logger.log(`User ${username} has been unfollowed already`);
       res.noActionTaken = true;
     } else {
-      logger.log("Failed to find unfollow button for: ", username);
+      logger.log(`Failed to find unfollow button for ${username}`);
       res.noActionTaken = true;
     }
   }
@@ -261,10 +261,10 @@ export async function unfollowUser({
       const elementHandle2 = await findFollowButton(page);
       if (!elementHandle2) {
         throw new Error(
-          `Unfollow button did not change state for: ${username}`,
+          `Unfollow button did not change state for ${username}`,
         );
       } else {
-        logger.log("Unfollowed user:", username);
+        logger.log(`Unfollowed user ${username}`);
       }
     }
 

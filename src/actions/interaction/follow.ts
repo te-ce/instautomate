@@ -61,7 +61,7 @@ export async function followUserRespectingRestrictions({
   const ratio = followerCount / (followsCount || 1);
 
   if (isPrivate || (isPrivate2 && skipPrivate)) {
-    logger.log("User is private, skipping");
+    logger.log(`User ${username} is private, skipping`);
     return false;
   }
   if (
@@ -75,7 +75,7 @@ export async function followUserRespectingRestrictions({
       followsCount < followUserWithMinFollowing)
   ) {
     logger.log(
-      "User has too many or too few followers or following, skipping.",
+      `User ${username} has too many or too few followers or following, skipping.`,
       "followedByCount:",
       followerCount,
       "followsCount:",
@@ -88,7 +88,7 @@ export async function followUserRespectingRestrictions({
     (followUserRatioMin != null && ratio < followUserRatioMin)
   ) {
     logger.log(
-      "User has too many followers compared to follows or opposite, skipping",
+      `User ${username} has too many followers compared to follows or opposite, skipping`,
     );
     return false;
   }
@@ -163,7 +163,7 @@ export async function followUser({
   const unfollowButton = await findUnfollowButton(page);
 
   if (unfollowButton) {
-    logger.log("We are already following this user");
+    logger.log(`We are already following ${username}, skipping`);
     await sleep({ seconds: 5 });
     return;
   }
@@ -171,7 +171,7 @@ export async function followUser({
   const followButton = await findFollowButton(page);
 
   if (!followButton) {
-    throw new Error("Follow button not found");
+    throw new Error(`Follow button not found for ${username}`);
   }
 
   logger.log(`Following user ${username}`);
@@ -200,9 +200,9 @@ export async function followUser({
     await db.addPrevFollowedUser(entry);
 
     if (!unfollowButton) {
-      logger.log("Button did not change state - Sleeping 1 min");
+      logger.log(`Button did not change state for ${username} - Sleeping 1 min`);
       await sleep({ seconds: 60 });
-      throw new Error("Button did not change state");
+      throw new Error(`Button did not change state for ${username}`);
     }
   }
 
