@@ -11,8 +11,12 @@ class DailyLimitReachedError extends Error {
   }
 }
 
-const { maxFollowActionsPerDay, maxLikesPerDay, maxFollowsPerHour } =
-  await getOptions();
+const {
+  maxFollowActionsPerDay,
+  maxLikesPerDay,
+  maxFollowsPerHour,
+  enableLikeImages,
+} = await getOptions();
 
 async function checkReachedFollowedUserDayLimit(db: JsonDB) {
   const currentFollowCount = db.getNumFollowedUsersThisTimeUnit(DAY_IN_MS, 24);
@@ -44,6 +48,9 @@ async function checkReachedFollowedUserHourLimit(db: JsonDB) {
 }
 
 async function checkReachedLikedUserDayLimit(db: JsonDB) {
+  if (!enableLikeImages) {
+    return;
+  }
   const currentLikesCount = db.getLikedPhotosLastTimeUnit(DAY_IN_MS, 24).length;
   logger.log(`Liked ${currentLikesCount}/${maxLikesPerDay} daily pictures`);
 
