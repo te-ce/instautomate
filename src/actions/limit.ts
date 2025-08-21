@@ -1,6 +1,6 @@
 import { JsonDB } from "src/db/db";
 import { DAY_IN_MS, HOUR_IN_MS } from "src/util/const";
-import { logger } from "src/util/logger";
+import { logActions, logDuration, logger } from "src/util/logger";
 import { getOptions } from "src/util/options";
 import { getDurationFormatted, sleep } from "src/util/util";
 
@@ -62,7 +62,8 @@ async function checkReachedLikedUserDayLimit(db: JsonDB) {
 }
 
 export async function throttle(db: JsonDB) {
-  logger.log(`Duration: ${getDurationFormatted(db)}`);
+  await logDuration();
+  await logActions();
   await checkReachedFollowedUserDayLimit(db);
   await checkReachedFollowedUserHourLimit(db);
   await checkReachedLikedUserDayLimit(db);

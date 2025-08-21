@@ -268,6 +268,7 @@ export async function unfollowUser({
     }
 
     await db.addPrevUnfollowedUser(res);
+    db.actions.unfollow++;
   }
 
   await sleep({ seconds: 15 });

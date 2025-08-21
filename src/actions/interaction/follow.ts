@@ -198,6 +198,7 @@ export async function followUser({
     }
 
     await db.addPrevFollowedUser(entry);
+    db.actions.follow++;
 
     if (!unfollowButton) {
       logger.log(`Button did not change state for ${username} - Sleeping 1 min`);

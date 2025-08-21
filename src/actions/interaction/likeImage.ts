@@ -201,4 +201,5 @@ export async function onImageLiked({
   db,
 }: Pick<User, "username" | "href"> & { db: JsonDB }) {
   await db.addLikedPhoto({ username, href, time: new Date().getTime() });
+  db.actions.like++;
 }
