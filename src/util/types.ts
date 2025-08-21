@@ -16,16 +16,20 @@ export const OptionsSchema = z.object({
     .describe("Enable taking screenshots"),
   maxFollowsPerHour: z
     .number()
+    .min(0)
+    .or(z.literal("unlimited"))
     .describe(
       "Global limit that prevents follow or unfollows (total) to exceed this number over a sliding window of one hour",
     ),
   maxFollowActionsPerDay: z
     .number()
+    .min(0)
     .describe(
       "Global limit that prevents follow or unfollows (total) to exceed this number over a sliding window of one day:",
     ),
   maxLikesPerDay: z
     .number()
+    .min(0)
     .describe(
       "Global limit that prevents likes to exceed this number over a sliding window of one day",
     ),

@@ -15,7 +15,7 @@ export const options: Omit<
   enableCookies: true,
   randomizeUserAgent: true,
 
-  maxFollowsPerHour: 10,
+  maxFollowsPerHour: "unlimited",
   maxFollowActionsPerDay: 50,
   maxLikesPerDay: 30,
   skipPrivate: true,

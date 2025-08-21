@@ -31,14 +31,9 @@ import { likeUserImages } from "./actions/interaction/likeImage.ts";
 
 export const Instauto = async (db: JsonDB, browser: Browser) => {
   const options = await getOptions();
-  const { username, maxFollowsPerHour, maxFollowActionsPerDay } = options;
+  const { username } = options;
   const page = await browser.newPage();
   const userDataCache: Record<string, User> = {};
-
-  assert(
-    maxFollowsPerHour * BOT_WORK_SHIFT_HOURS >= maxFollowActionsPerDay,
-    "Max follows per hour too low compared to max follows per day",
-  );
 
   await startup(page, browser, options, db);
 

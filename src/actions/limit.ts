@@ -28,7 +28,11 @@ async function checkReachedFollowedUserDayLimit(db: JsonDB) {
 }
 
 async function checkReachedFollowedUserHourLimit(db: JsonDB) {
+  if (maxFollowsPerHour === "unlimited") {
+    return;
+  }
   const currentHour = new Date().getHours();
+
   if (
     db.getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, currentHour) >=
     maxFollowsPerHour
