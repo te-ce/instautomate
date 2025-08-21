@@ -1,4 +1,4 @@
-import { getJsonDb, JsonDB } from "./db/db.ts";
+import { getJsonDb } from "./db/db.ts";
 import { Browser } from "puppeteer";
 import { getOptions } from "./util/options.ts";
 import { User } from "./util/types.ts";
@@ -27,13 +27,13 @@ import {
 } from "./actions/interaction/follow.ts";
 import { likeUserImages } from "./actions/interaction/likeImage.ts";
 
-export const Instauto = async (db: JsonDB, browser: Browser) => {
+export const Instauto = async (browser: Browser) => {
   const options = await getOptions();
   const { username } = options;
   const page = await browser.newPage();
   const userDataCache: Record<string, User> = {};
 
-  await startup(page, browser, options, db);
+  await startup(page, browser, options);
 
   const myUserId = await navigateToUserAndGetProfileId(
     username,

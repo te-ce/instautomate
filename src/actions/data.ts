@@ -5,7 +5,7 @@ import { Page } from "puppeteer";
 import { getPageJson, shuffleArray, sleep } from "src/util/util";
 import { takeScreenshot } from "./screenshot";
 import { throttle } from "./limit";
-import { JsonDB } from "src/db/db";
+import { getJsonDb } from "src/db/db";
 import { likeUserImages } from "./interaction/likeImage";
 import { User } from "src/util/types";
 import { isAlreadyOnUserPage } from "src/util/status";
@@ -126,7 +126,6 @@ export async function processUserFollowers({
   likeImagesMin = 0,
   likeImagesMax = 0,
   page,
-  db,
   userDataCache,
 }: {
   username: string;
@@ -136,7 +135,6 @@ export async function processUserFollowers({
   likeImagesMin: number;
   likeImagesMax: number;
   page: Page;
-  db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
   const enableFollow = maxFollowsPerUser > 0;
@@ -148,7 +146,7 @@ export async function processUserFollowers({
       `Liking images of up to ${likeImagesMax} followers of ${username}`,
     );
 
-  await throttle(db);
+  await throttle();
 
   let numFollowedForThisUser = 0;
 
@@ -169,7 +167,7 @@ export async function processUserFollowers({
 
     const shuffledFollowers = shuffleArray(followersBatch);
     for (const follower of shuffledFollowers) {
-      await throttle(db);
+      await throttle();
 
       try {
         if (enableFollow && numFollowedForThisUser >= maxFollowsPerUser) {
@@ -183,7 +181,6 @@ export async function processUserFollowers({
             username: follower,
             skipPrivate,
             page,
-            db,
             userDataCache,
           });
         if (didActuallyFollow) {
@@ -203,7 +200,6 @@ export async function processUserFollowers({
             likeImagesMax,
             page,
             userDataCache,
-            db,
           });
         }
       } catch (err) {
@@ -224,7 +220,6 @@ export async function processUsersFollowers({
   likeImagesMin = 1,
   likeImagesMax = 2,
   page,
-  db,
   userDataCache,
 }: {
   usersToFollowFollowersOf: string[];
@@ -235,7 +230,6 @@ export async function processUsersFollowers({
   likeImagesMin?: number;
   likeImagesMax?: number;
   page: Page;
-  db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
   // If maxFollowsTotal turns out to be lower than the user list size, slice off the user list
@@ -266,12 +260,11 @@ export async function processUsersFollowers({
         likeImagesMin,
         likeImagesMax,
         page,
-        db,
         userDataCache,
       });
 
       await sleep({ minutes: 2 });
-      await throttle(db);
+      await throttle();
     } catch (err) {
       if (err instanceof Error && err.name === "DailyLimitReachedError") {
         logger.log("Daily limit reached, stopping:", err.message);
@@ -290,15 +283,15 @@ export async function processUsersFollowers({
 
 export async function listManuallyFollowedUsers({
   myUserId,
-  db,
   excludeUsers,
   page,
 }: {
   myUserId: string;
-  db: JsonDB;
   excludeUsers: string[];
   page: Page;
 }) {
+  const db = await getJsonDb();
+
   const allFollowing = await getFollowersOrFollowing({
     userId: myUserId || "",
     getFollowers: false,

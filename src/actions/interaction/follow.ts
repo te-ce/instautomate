@@ -1,5 +1,5 @@
 import { logger } from "src/util/logger";
-import { JsonDB } from "src/db/db";
+import { getJsonDb } from "src/db/db";
 import { Page } from "puppeteer";
 import { checkActionBlocked, isUserPrivate } from "src/util/status";
 import { getOptions } from "src/util/options";
@@ -15,15 +15,14 @@ export async function followUserRespectingRestrictions({
   username,
   skipPrivate = false,
   page,
-  db,
   userDataCache,
 }: {
   username: string;
   skipPrivate: boolean;
   page: Page;
-  db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
+  const db = await getJsonDb();
   const {
     followUserWithMaxFollowers,
     followUserWithMaxFollowing,
@@ -103,10 +102,10 @@ export async function followUserRespectingRestrictions({
     return false;
   }
 
-  await followUser({ username, page, userDataCache, db });
+  await followUser({ username, page, userDataCache });
 
   await sleep({ seconds: 15 });
-  await throttle(db);
+  await throttle();
 
   return true;
 }
@@ -116,27 +115,24 @@ export async function safelyFollowUserList({
   skipPrivate,
   limit,
   page,
-  db,
   userDataCache,
 }: {
   users: string[];
   skipPrivate: boolean;
   limit: number;
   page: Page;
-  db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
   logger.log("Following users, up to limit", limit);
 
   for (const username of users) {
-    await throttle(db);
+    await throttle();
 
     try {
       await followUserRespectingRestrictions({
         username,
         skipPrivate,
         page,
-        db,
         userDataCache,
       });
     } catch (err) {
@@ -151,14 +147,14 @@ export async function followUser({
   username,
   page,
   userDataCache,
-  db,
 }: {
   username: string;
   page: Page;
   userDataCache: Record<string, User>;
-  db: JsonDB;
 }) {
   const { dryRun, muteUsers } = await getOptions();
+  const db = await getJsonDb();
+
   await navigateToUserAndGetData({ username, page, userDataCache });
   const unfollowButton = await findUnfollowButton(page);
 
@@ -201,7 +197,9 @@ export async function followUser({
     db.actions.follow++;
 
     if (!unfollowButton) {
-      logger.log(`Button did not change state for ${username} - Sleeping 1 min`);
+      logger.log(
+        `Button did not change state for ${username} - Sleeping 1 min`,
+      );
       await sleep({ seconds: 60 });
       throw new Error(`Button did not change state for ${username}`);
     }

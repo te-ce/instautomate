@@ -1,4 +1,4 @@
-import { JsonDB } from "src/db/db";
+import { getJsonDb } from "src/db/db";
 import { DAY_IN_MS, HOUR_IN_MS } from "src/util/const";
 import { logStats, logger } from "src/util/logger";
 import { getOptions } from "src/util/options";
@@ -18,7 +18,9 @@ const {
   enableLikeImages,
 } = await getOptions();
 
-async function checkReachedFollowedUserDayLimit(db: JsonDB) {
+async function checkReachedFollowedUserDayLimit() {
+  const db = await getJsonDb();
+
   const currentFollowCount = db.getNumFollowedUsersThisTimeUnit(DAY_IN_MS, 24);
   logger.log(
     `Followed ${currentFollowCount}/${maxFollowActionsPerDay} daily users`,
@@ -31,7 +33,9 @@ async function checkReachedFollowedUserDayLimit(db: JsonDB) {
   }
 }
 
-async function checkReachedFollowedUserHourLimit(db: JsonDB) {
+async function checkReachedFollowedUserHourLimit() {
+  const db = await getJsonDb();
+
   if (maxFollowsPerHour === "unlimited") {
     return;
   }
@@ -43,11 +47,13 @@ async function checkReachedFollowedUserHourLimit(db: JsonDB) {
   ) {
     logger.log("Hourly follow rate limit reached, pausing 10 min.");
     await sleep({ minutes: 10, silent: true });
-    return checkReachedFollowedUserHourLimit(db);
+    return checkReachedFollowedUserHourLimit();
   }
 }
 
-async function checkReachedLikedUserDayLimit(db: JsonDB) {
+async function checkReachedLikedUserDayLimit() {
+  const db = await getJsonDb();
+
   if (!enableLikeImages) {
     return;
   }
@@ -61,9 +67,9 @@ async function checkReachedLikedUserDayLimit(db: JsonDB) {
   }
 }
 
-export async function throttle(db: JsonDB) {
+export async function throttle() {
   await logStats();
-  await checkReachedFollowedUserDayLimit(db);
-  await checkReachedFollowedUserHourLimit(db);
-  await checkReachedLikedUserDayLimit(db);
+  await checkReachedFollowedUserDayLimit();
+  await checkReachedFollowedUserHourLimit();
+  await checkReachedLikedUserDayLimit();
 }

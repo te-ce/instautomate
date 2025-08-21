@@ -3,7 +3,7 @@ import { Options } from "src/util/types";
 import { logger } from "src/util/logger";
 import { sleep } from "src/util/util";
 import UserAgent from "user-agents";
-import { JsonDB } from "src/db/db";
+import { getJsonDb } from "src/db/db";
 import { DAY_IN_MS, HOUR_IN_MS } from "src/util/const";
 import { isLoggedIn } from "src/util/status";
 import { tryDeleteCookies, tryLoadCookies, trySaveCookies } from "./cookies";
@@ -13,8 +13,8 @@ export const startup = async (
   page: Page,
   browser: Browser,
   options: Options,
-  db: JsonDB,
 ) => {
+  const db = await getJsonDb();
   const { randomizeUserAgent, enableCookies, password, username } = options;
   const { getNumFollowedUsersThisTimeUnit, getLikedPhotosLastTimeUnit } = db;
 

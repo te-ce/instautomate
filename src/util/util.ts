@@ -1,7 +1,7 @@
 import { Page } from "puppeteer";
 import { HOUR_IN_MS, INSTAGRAM_URL, MINUTE_IN_MS, SECOND_IN_MS } from "./const";
 import { logger } from "./logger";
-import { JsonDB } from "src/db/db";
+import { getJsonDb } from "src/db/db";
 
 export function shuffleArray(arrayIn: any[]) {
   const array = [...arrayIn];
@@ -60,13 +60,14 @@ export const formatMs = (ms: number) => {
   return `${hours}h ${minutes}m ${seconds}s`;
 };
 
-export const getDurationInMs = (db: JsonDB) => {
+export const getDurationInMs = async () => {
+  const db = await getJsonDb();
   const duration = new Date().getTime() - db.startTime.getTime();
   return duration;
 };
 
-export const getDurationFormatted = (db: JsonDB) => {
-  const duration = getDurationInMs(db);
+export const getDurationFormatted = async () => {
+  const duration = await getDurationInMs();
   return formatMs(duration);
 };
 

@@ -1,7 +1,7 @@
 import assert from "assert";
 import { logger } from "src/util/logger";
 import { navigateToUser } from "../navigation";
-import { JsonDB } from "src/db/db";
+import { getJsonDb } from "src/db/db";
 import { Page } from "puppeteer";
 import { sleep } from "src/util/util";
 import { throttle } from "../limit";
@@ -28,15 +28,14 @@ export async function unfollowAllUnknown({
   limit,
   myUserId,
   page,
-  db,
   userDataCache,
 }: {
   limit: number;
   myUserId: string;
   page: Page;
-  db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
+  const db = await getJsonDb();
   const { excludeUsers } = await getOptions();
   logger.log("Unfollowing all except excludes and auto followed");
 
@@ -57,7 +56,6 @@ export async function unfollowAllUnknown({
     limit,
     condition,
     page,
-    db,
     userDataCache,
   });
 }
@@ -66,15 +64,14 @@ export async function unfollowOldFollowed({
   ageInDays,
   limit,
   page,
-  db,
   userDataCache,
 }: {
   ageInDays: number;
   limit: number;
   page: Page;
-  db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
+  const db = await getJsonDb();
   assert(ageInDays >= 0);
   const { excludeUsers } = await getOptions();
 
@@ -82,7 +79,7 @@ export async function unfollowOldFollowed({
     `Unfollowing currently followed users who were auto-followed more than ${ageInDays} days ago (limit ${limit})...`,
   );
 
-  const usersToUnfollow = await getUsersToUnfollowSince(db, ageInDays);
+  const usersToUnfollow = await getUsersToUnfollowSince(ageInDays);
 
   async function condition(username: string) {
     return (
@@ -98,7 +95,6 @@ export async function unfollowOldFollowed({
     limit,
     condition,
     page,
-    db,
     userDataCache,
   });
 }
@@ -108,14 +104,12 @@ export async function safelyUnfollowUserListGenerator({
   limit,
   condition,
   page,
-  db,
   userDataCache,
 }: {
   usersToUnfollow: AsyncGenerator<any[], string[], unknown>;
   limit: number;
   condition: (username: string) => Promise<boolean>;
   page: Page;
-  db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
   for await (const listOrUsername of usersToUnfollow) {
@@ -129,7 +123,6 @@ export async function safelyUnfollowUserListGenerator({
       limit,
       condition,
       page,
-      db,
       userDataCache,
     });
   }
@@ -140,16 +133,15 @@ export async function safelyUnfollowUsers({
   limit,
   condition,
   page,
-  db,
   userDataCache,
 }: {
   usersToUnfollow: string[];
   limit: number;
   condition: (username: string) => Promise<boolean>;
   page: Page;
-  db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
+  const db = await getJsonDb();
   logger.log("Unfollowing users, up to limit", limit);
 
   let peopleProcessed = 0;
@@ -173,7 +165,6 @@ export async function safelyUnfollowUsers({
           const { noActionTaken } = await unfollowUser({
             username,
             page,
-            db,
             userDataCache,
           });
 
@@ -200,7 +191,7 @@ export async function safelyUnfollowUsers({
           return peopleUnfollowed;
         }
 
-        await throttle(db);
+        await throttle();
       } catch (err) {
         logger.error(
           `Failed to unfollow ${username}, continuing with next`,
@@ -220,14 +211,13 @@ export async function safelyUnfollowUsers({
 export async function unfollowUser({
   username,
   page,
-  db,
   userDataCache,
 }: {
   username: string;
   page: Page;
-  db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
+  const db = await getJsonDb();
   const { dryRun } = await getOptions();
 
   await navigateToUserAndGetData({ username, page, userDataCache });
@@ -280,13 +270,11 @@ export async function unfollowNonMutualFollowers({
   limit,
   myUserId,
   page,
-  db,
   userDataCache,
 }: {
   limit: number;
   myUserId: string;
   page: Page;
-  db: JsonDB;
   userDataCache: Record<string, User>;
 }) {
   const { excludeUsers } = await getOptions();
@@ -301,7 +289,7 @@ export async function unfollowNonMutualFollowers({
 
   async function condition(username: string) {
     if (excludeUsers.includes(username)) return false; // User is excluded by exclude list
-    if (await haveRecentlyFollowedUser(db, username)) {
+    if (await haveRecentlyFollowedUser(username)) {
       logger.log(`Have recently followed user ${username}, skipping`);
       return false;
     }
@@ -321,12 +309,12 @@ export async function unfollowNonMutualFollowers({
     limit,
     condition,
     page,
-    db,
     userDataCache,
   });
 }
 
-export async function getUsersToUnfollowSince(db: JsonDB, daysPassed: number) {
+export async function getUsersToUnfollowSince(daysPassed: number) {
+  const db = await getJsonDb();
   const { excludeUsers } = await getOptions();
   const timeNowInMs = new Date().getTime();
   const users = db.prevFollowedUsers;

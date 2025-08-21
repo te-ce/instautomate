@@ -4,20 +4,18 @@ import { Media, User } from "src/util/types";
 import { shuffleArray, sleep } from "src/util/util";
 import { navigateToUserAndGetData } from "../data";
 import { getOptions } from "src/util/options";
-import { JsonDB } from "src/db/db";
+import { getJsonDb } from "src/db/db";
 
 export async function likeCurrentUserImagesPageCode({
   dryRun: dryRunIn,
   likeImagesMin,
   likeImagesMax,
   shouldLikeMedia: shouldLikeMediaIn,
-  db,
 }: {
   dryRun: boolean;
   likeImagesMin: number;
   likeImagesMax: number;
   shouldLikeMedia: (media: Media) => boolean;
-  db: JsonDB;
 }) {
   const allImages = Array.from(document.getElementsByTagName("a")).filter(
     (el) => /\/p\//.test(el.href),
@@ -120,7 +118,7 @@ export async function likeCurrentUserImagesPageCode({
       }
 
       foundClickable.click();
-      onImageLiked({ username: image.href, href: image.href, db });
+      onImageLiked({ username: image.href, href: image.href });
     }
 
     if (!dryRunIn) {
@@ -152,14 +150,12 @@ export async function likeUserImages({
   likeImagesMax = 0,
   page,
   userDataCache,
-  db,
 }: {
   username: string;
   likeImagesMin: number;
   likeImagesMax: number;
   page: Page;
   userDataCache: Record<string, User>;
-  db: JsonDB;
 }) {
   const { likeMediaFilterFn, dryRun } = await getOptions();
 
@@ -180,7 +176,7 @@ export async function likeUserImages({
       console.log(...args),
     );
     await page.exposeFunction("instautoOnImageLiked", (href: string) =>
-      onImageLiked({ username, href, db }),
+      onImageLiked({ username, href }),
     );
   } catch (err) {
     logger.log("Failed to expose functions", err);
@@ -198,8 +194,8 @@ export async function likeUserImages({
 export async function onImageLiked({
   username,
   href,
-  db,
-}: Pick<User, "username" | "href"> & { db: JsonDB }) {
+}: Pick<User, "username" | "href">) {
+  const db = await getJsonDb();
   await db.addLikedPhoto({ username, href, time: new Date().getTime() });
   db.actions.like++;
 }

@@ -36,9 +36,7 @@ import { logger, logFinish } from "./util/logger.ts";
     });
 
     // Create a database where state will be loaded/saved to
-    const instautoDb = await Instauto.getJsonDb();
-
-    const instauto = await Instauto(instautoDb, browser);
+    const instauto = await Instauto(browser);
 
     // This can be used to unfollow people:
     // Will unfollow auto-followed AND manually followed accounts who are not following us back, after some time has passed
@@ -55,7 +53,6 @@ import { logger, logFinish } from "./util/logger.ts";
         MIN_UNFOLLOW_COUNT +
         Math.floor(options.maxFollowActionsPerDay * (2 / 3)),
       page: instauto.getPage(),
-      db: instautoDb,
       userDataCache: instauto.userDataCache,
     });
 
@@ -69,7 +66,6 @@ import { logger, logFinish } from "./util/logger.ts";
       enableLikeImages: options.enableLikeImages,
       likeImagesMax: options.maxLikesPerDay,
       page: instauto.getPage(),
-      db: instautoDb,
       userDataCache: instauto.userDataCache,
     });
   } catch (err) {

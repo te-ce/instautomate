@@ -1,6 +1,6 @@
-import { options } from "config/default/options";
 import { getDurationFormatted } from "./util";
 import { getJsonDb } from "src/db/db";
+import { getOptions } from "./options";
 
 type ConsoleMethod = "log" | "info" | "debug" | "error" | "trace" | "warn";
 
@@ -14,6 +14,7 @@ export const logger = Object.fromEntries(
 );
 
 export const logFinish = async () => {
+  const options = await getOptions();
   logger.log("");
   logger.log("");
   logger.log("== FINISHED ==");
@@ -27,13 +28,14 @@ export const logFinish = async () => {
 
 export const logStats = async () => {
   const db = await getJsonDb();
-  let log = "";
+  let actions = "";
 
   for (const [action, count] of Object.entries(db.actions)) {
     if (count > 0) {
-      log += `${count}x ${action}, `;
+      actions += `${count}x ${action}, `;
     }
   }
-  log = log.slice(0, -2);
-  logger.log(`[${getDurationFormatted(db)} - ${log}]`);
+  actions = actions.slice(0, -2);
+  const duration = await getDurationFormatted();
+  logger.log(`[${duration} | ${actions}]`);
 };

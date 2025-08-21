@@ -2,7 +2,7 @@ import { Page } from "puppeteer";
 import { logger } from "./logger";
 import { escapeXpathStr, getUserPageUrl, sleep } from "./util";
 import { tryDeleteCookies } from "src/actions/cookies";
-import { JsonDB } from "src/db/db";
+import { getJsonDb } from "src/db/db";
 import { getOptions } from "./options";
 import { navigateToUserAndGetProfileId } from "src/actions/data";
 import { User } from "./types";
@@ -48,7 +48,9 @@ export async function isUserPrivate(page: Page) {
   return isPrivate.length > 0;
 }
 
-export async function haveRecentlyFollowedUser(db: JsonDB, username: string) {
+export async function haveRecentlyFollowedUser(username: string) {
+  const db = await getJsonDb();
+
   const { unfollowAfterDays } = await getOptions();
   const followedUserEntry = db.prevFollowedUsers[username];
 
