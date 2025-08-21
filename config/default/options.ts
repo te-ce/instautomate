@@ -33,7 +33,6 @@ export const options: Omit<
   likeMediaFilterFn: null,
 
   unfollowAfterDays: 7,
-  dontUnfollowUntilTimeElapsed: 3 * 24 * 60 * 60 * 1000,
 
   usersToFollowFollowersOf: [""],
   excludeUsers: [""],

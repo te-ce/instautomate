@@ -81,11 +81,6 @@ export const OptionsSchema = z.object({
     .describe(
       "Unfollow users that don't follow us back after this number of days",
     ),
-  dontUnfollowUntilTimeElapsed: z
-    .number()
-    .describe(
-      "This specifies the time during which the bot should not touch users that it has previously followed (in milliseconds)",
-    ),
   excludeUsers: z
     .array(z.string())
     .describe(

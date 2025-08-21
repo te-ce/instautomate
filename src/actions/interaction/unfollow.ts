@@ -88,8 +88,7 @@ export async function unfollowOldFollowed({
     return (
       db.prevFollowedUsers[username] &&
       !excludeUsers.includes(username) &&
-      (new Date().getTime() - db.prevFollowedUsers[username].time) /
-        (1000 * 60 * 60 * 24) >
+      (new Date().getTime() - db.prevFollowedUsers[username].time) / DAY_IN_MS >
         ageInDays
     );
   }
@@ -203,7 +202,10 @@ export async function safelyUnfollowUsers({
 
         await throttle(db);
       } catch (err) {
-        logger.error(`Failed to unfollow ${username}, continuing with next`, err);
+        logger.error(
+          `Failed to unfollow ${username}, continuing with next`,
+          err,
+        );
       }
     }
   }
@@ -247,7 +249,6 @@ export async function unfollowUser({
 
   if (!dryRun) {
     if (unfollowButton) {
-
       await toggleMuteUser(page, username, false);
       await unfollowButton.click();
       await sleep({ seconds: 2, silent: true });
@@ -260,9 +261,7 @@ export async function unfollowUser({
 
       const elementHandle2 = await findFollowButton(page);
       if (!elementHandle2) {
-        throw new Error(
-          `Unfollow button did not change state for ${username}`,
-        );
+        throw new Error(`Unfollow button did not change state for ${username}`);
       } else {
         logger.log(`Unfollowed user ${username}`);
       }

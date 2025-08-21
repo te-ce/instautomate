@@ -6,6 +6,7 @@ import { JsonDB } from "src/db/db";
 import { getOptions } from "./options";
 import { navigateToUserAndGetProfileId } from "src/actions/data";
 import { User } from "./types";
+import { DAY_IN_MS } from "./const";
 
 export async function isLoggedIn(page: Page) {
   return (await page.$$('xpath///*[@aria-label="Home"]')).length === 1;
@@ -48,12 +49,12 @@ export async function isUserPrivate(page: Page) {
 }
 
 export async function haveRecentlyFollowedUser(db: JsonDB, username: string) {
-  const { dontUnfollowUntilTimeElapsed } = await getOptions();
+  const { unfollowAfterDays } = await getOptions();
   const followedUserEntry = db.prevFollowedUsers[username];
 
   if (!followedUserEntry) return false; // We did not previously follow this user, so don't know
   return (
-    new Date().getTime() - followedUserEntry.time < dontUnfollowUntilTimeElapsed
+    new Date().getTime() - followedUserEntry.time < unfollowAfterDays * DAY_IN_MS
   );
 }
 

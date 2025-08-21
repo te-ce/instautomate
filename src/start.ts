@@ -43,7 +43,6 @@ import { jsonDb } from "./db/db.ts";
 
     // This can be used to unfollow people:
     // Will unfollow auto-followed AND manually followed accounts who are not following us back, after some time has passed
-    // The time is specified by config option dontUnfollowUntilTimeElapsed
     // await instauto.unfollowNonMutualFollowers();
     // await instauto.sleepSeconds(10 * 60);
 
