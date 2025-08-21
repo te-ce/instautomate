@@ -72,12 +72,11 @@ import { logger, logFinish } from "./util/logger.ts";
       db: instautoDb,
       userDataCache: instauto.userDataCache,
     });
-
-    await logFinish();
   } catch (err) {
     logger.error(err);
   } finally {
     logger.log("Closing browser");
+    await logFinish();
     if (browser) await browser.close();
   }
 })();

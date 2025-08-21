@@ -20,23 +20,20 @@ export const logFinish = async () => {
   logger.log(`Current day: ${new Date().toLocaleDateString()}`);
   logger.log(`Current time: ${new Date().toLocaleTimeString()}`);
   logger.log(`Username: ${options.username}`);
-  await logDuration();
-  await logActions();
+  await logStats();
   logger.log("");
   logger.log("");
 };
 
-export const logDuration = async () => {
+export const logStats = async () => {
   const db = await getJsonDb();
-  logger.log(`Duration: ${getDurationFormatted(db)}`);
-};
-
-export const logActions = async () => {
-  const db = await getJsonDb();
+  let log = "";
 
   for (const [action, count] of Object.entries(db.actions)) {
     if (count > 0) {
-      logger.log(`${action}: ${count}`);
+      log += `${count}x ${action}, `;
     }
   }
+  log = log.slice(0, -2);
+  logger.log(`[${getDurationFormatted(db)} - ${log}]`);
 };
