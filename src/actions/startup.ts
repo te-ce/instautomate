@@ -1,6 +1,6 @@
 import { Browser, Page } from "puppeteer";
 import { Options } from "src/util/types";
-import { logger } from "src/util/logger";
+import { logger, logStartup } from "src/util/logger";
 import { sleep } from "src/util/util";
 import UserAgent from "user-agents";
 import { getJsonDb } from "src/db/db";
@@ -18,14 +18,7 @@ export const startup = async (
   const { randomizeUserAgent, enableCookies, password, username } = options;
   const { getNumFollowedUsersThisTimeUnit, getLikedPhotosLastTimeUnit } = db;
 
-  logger.log("");
-  logger.log("");
-  logger.log("== STARTING UP ==");
-  logger.log(`Current day: ${db.startTime.toLocaleDateString()}`);
-  logger.log(`Current time: ${db.startTime.toLocaleTimeString()}`);
-  logger.log(`Username: ${username}`);
-  logger.log("");
-  logger.log("");
+  await logStartup();
 
   // https://github.com/mifi/SimpleInstaBot/issues/118#issuecomment-1067883091
   await page.setExtraHTTPHeaders({ "Accept-Language": "en" });

@@ -13,6 +13,20 @@ export const logger = Object.fromEntries(
   ]),
 );
 
+export const logStartup = async () => {
+  const db = await getJsonDb();
+  const { username } = await getOptions();
+
+  logger.log("");
+  logger.log("");
+  logger.log("== STARTING UP ==");
+  logger.log(`Current day: ${db.startTime.toLocaleDateString()}`);
+  logger.log(`Current time: ${db.startTime.toLocaleTimeString()}`);
+  logger.log(`Username: ${username}`);
+  logger.log("");
+  logger.log("");
+};
+
 export const logFinish = async () => {
   const options = await getOptions();
   logger.log("");
