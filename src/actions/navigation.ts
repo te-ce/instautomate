@@ -1,6 +1,6 @@
 import { ElementHandle, Page } from "puppeteer";
 import { INSTAGRAM_URL } from "src/util/const";
-import { logger } from "src/util/logger";
+import { colorName, logger } from "src/util/logger";
 import { isAlreadyOnUserPage } from "src/util/status";
 import { escapeXpathStr, getUserPageUrl, sleep } from "src/util/util";
 
@@ -59,7 +59,7 @@ export async function gotoWithRetry(page: Page, url: string) {
 
 export async function navigateToUser(page: Page, username: string) {
   if (isAlreadyOnUserPage(page, username)) return true;
-  logger.log(`Navigating to user ${username}`);
+  logger.log(`Navigating to user ${colorName(username)}`);
 
   const url = getUserPageUrl(username);
   const status = await gotoWithRetry(page, url);
@@ -78,7 +78,7 @@ export async function navigateToUser(page: Page, username: string) {
     );
     const foundUsernameOnPage = elementHandles.length > 0;
     if (!foundUsernameOnPage)
-      logger.warn(`Cannot find text "${username}" on page`);
+      logger.warn(`Cannot find text "${colorName(username)}" on page`);
     return foundUsernameOnPage;
   }
 

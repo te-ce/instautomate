@@ -4,7 +4,7 @@ import { logger, logStartup } from "src/util/logger";
 import { sleep } from "src/util/util";
 import UserAgent from "user-agents";
 import { getJsonDb } from "src/db/db";
-import { DAY_IN_MS, HOUR_IN_MS } from "src/util/const";
+import { DAY_IN_MS, HOUR_IN_MS, LIMIT_COLOR } from "src/util/const";
 import { isLoggedIn } from "src/util/status";
 import { tryDeleteCookies, tryLoadCookies, trySaveCookies } from "./cookies";
 import { goHome, tryPressButton } from "./navigation";
@@ -147,12 +147,12 @@ export const startup = async (
   await trySaveCookies(browser);
 
   logger.log(
-    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, new Date().getHours())} in the last hour`,
+    `${LIMIT_COLOR}Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, new Date().getHours())} in the last hour`,
   );
   logger.log(
-    `Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(DAY_IN_MS, 24)} in the last 24 hours`,
+    `${LIMIT_COLOR}Have followed/unfollowed ${getNumFollowedUsersThisTimeUnit(DAY_IN_MS, 24)} in the last 24 hours`,
   );
   logger.log(
-    `Have liked ${getLikedPhotosLastTimeUnit(DAY_IN_MS, 24).length} images in the last 24 hours`,
+    `${LIMIT_COLOR}Have liked ${getLikedPhotosLastTimeUnit(DAY_IN_MS, 24).length} images in the last 24 hours`,
   );
 };

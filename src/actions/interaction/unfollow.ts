@@ -1,5 +1,5 @@
 import assert from "assert";
-import { logger } from "src/util/logger";
+import { colorName, logger } from "src/util/logger";
 import { navigateToUser } from "../navigation";
 import { getJsonDb } from "src/db/db";
 import { Page } from "puppeteer";
@@ -154,7 +154,7 @@ export async function safelyUnfollowUsers({
 
         if (!userFound) {
           // to avoid repeatedly unfollowing failed users, flag them as already unfollowed
-          logger.log(` ${username} not found for unfollow`);
+          logger.log(` ${colorName(username)} not found for unfollow`);
           await db.addPrevUnfollowedUser({
             username,
             time: new Date().getTime(),
@@ -194,7 +194,7 @@ export async function safelyUnfollowUsers({
         await throttle();
       } catch (err) {
         logger.error(
-          `Failed to unfollow ${username}, continuing with next`,
+          `Failed to unfollow ${colorName(username)}, continuing with next`,
           err,
         );
       }
@@ -221,7 +221,7 @@ export async function unfollowUser({
   const { dryRun } = await getOptions();
 
   await navigateToUserAndGetData({ username, page, userDataCache });
-  logger.log(`Unfollowing user ${username}...`);
+  logger.log(`Unfollowing user ${colorName(username)}...`);
 
   const res: User = { username, time: new Date().getTime() };
 
@@ -229,10 +229,10 @@ export async function unfollowUser({
   if (!unfollowButton) {
     const followButton = await findFollowButton(page);
     if (followButton) {
-      logger.log(`User ${username} has been unfollowed already`);
+      logger.log(`User ${colorName(username)} has been unfollowed already`);
       res.noActionTaken = true;
     } else {
-      logger.log(`Failed to find unfollow button for ${username}`);
+      logger.log(`Failed to find unfollow button for ${colorName(username)}`);
       res.noActionTaken = true;
     }
   }
@@ -251,9 +251,11 @@ export async function unfollowUser({
 
       const elementHandle2 = await findFollowButton(page);
       if (!elementHandle2) {
-        throw new Error(`Unfollow button did not change state for ${username}`);
+        throw new Error(
+          `Unfollow button did not change state for ${colorName(username)}`,
+        );
       } else {
-        logger.log(`Unfollowed user ${username}`);
+        logger.log(`Unfollowed user ${colorName(username)}`);
       }
     }
 
@@ -290,7 +292,9 @@ export async function unfollowNonMutualFollowers({
   async function condition(username: string) {
     if (excludeUsers.includes(username)) return false; // User is excluded by exclude list
     if (await haveRecentlyFollowedUser(username)) {
-      logger.log(`Have recently followed user ${username}, skipping`);
+      logger.log(
+        `Have recently followed user ${colorName(username)}, skipping`,
+      );
       return false;
     }
 

@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import { logger } from "src/util/logger";
+import { colorName, logger } from "src/util/logger";
 import { sleep } from "src/util/util";
 import { navigateToUser } from "../navigation";
 import { findUnfollowButton, findFollowButton } from "../locator";
@@ -62,9 +62,9 @@ export async function toggleMuteUser(
   if (saveButton.length > 0) {
     await saveButton[0].click();
     await sleep({ seconds: 2, silent: true });
-    logger.log(`Toggled mute of ${username} to ${mute}`);
+    logger.log(`Toggled mute of ${colorName(username)} to ${mute}`);
   } else {
-    logger.log(`Failed to save mute of ${username} to ${mute}`);
+    logger.log(`Failed to save mute of ${colorName(username)} to ${mute}`);
   }
 
   if (closeButton.length > 0) {

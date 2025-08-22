@@ -1,6 +1,6 @@
-import { logger } from "src/util/logger";
+import { colorName, logger } from "src/util/logger";
 import { gotoUrl, navigateToUser } from "./navigation";
-import { INSTAGRAM_URL } from "src/util/const";
+import { LIMIT_COLOR, INSTAGRAM_URL } from "src/util/const";
 import { Page } from "puppeteer";
 import { getPageJson, shuffleArray, sleep } from "src/util/util";
 import { takeScreenshot } from "./screenshot";
@@ -140,10 +140,12 @@ export async function processUserFollowers({
   const enableFollow = maxFollowsPerUser > 0;
 
   if (enableFollow)
-    logger.log(`Following up to ${maxFollowsPerUser} followers of ${username}`);
+    logger.log(
+      `Following up to ${maxFollowsPerUser} followers of ${colorName(username)}`,
+    );
   if (enableLikeImages)
     logger.log(
-      `Liking images of up to ${likeImagesMax} followers of ${username}`,
+      `Liking images of up to ${likeImagesMax} followers of ${colorName(username)}`,
     );
 
   await throttle();
@@ -186,7 +188,7 @@ export async function processUserFollowers({
         if (didActuallyFollow) {
           numFollowedForThisUser += 1;
           logger.log(
-            `Followed ${numFollowedForThisUser}/${maxFollowsPerUser} users for ${username}`,
+            `${LIMIT_COLOR}Followed ${numFollowedForThisUser}/${maxFollowsPerUser} users for ${colorName(username)}`,
           );
         }
 
@@ -324,7 +326,7 @@ export async function navigateToUserAndGetProfileIdFromHtml({
     return match ? match[1] : null;
   });
 
-  logger.log(`Got profile id ${profileId} for user ${username}`);
+  logger.log(`Got profile id ${profileId} for user ${colorName(username)}`);
   return profileId;
 }
 
@@ -390,7 +392,7 @@ export async function navigateToUserAndGetData({
       }
     } catch (err) {
       logger.warn(
-        `Unable to get user data from page (${username}) - This is normal`,
+        `Unable to get user data from page (${colorName(username)}) - This is normal`,
         err,
       );
     }

@@ -1,4 +1,4 @@
-import { logger } from "src/util/logger";
+import { colorName, logger } from "src/util/logger";
 import { getJsonDb } from "src/db/db";
 import { Page } from "puppeteer";
 import { checkActionBlocked, isUserPrivate } from "src/util/status";
@@ -57,7 +57,7 @@ export async function followUserRespectingRestrictions({
   const ratio = followerCount / (followsCount || 1);
 
   if (isPrivate || (isPrivate2 && skipPrivate)) {
-    logger.log(`User ${username} is private, skipping`);
+    logger.log(`User ${colorName(username)} is private, skipping`);
     return false;
   }
   if (
@@ -71,7 +71,7 @@ export async function followUserRespectingRestrictions({
       followsCount < followUserWithMinFollowing)
   ) {
     logger.log(
-      `User ${username} has too many or too few followers or following, skipping.`,
+      `User ${colorName(username)} has too many or too few followers or following, skipping.`,
       "followedByCount:",
       followerCount,
       "followsCount:",
@@ -84,7 +84,7 @@ export async function followUserRespectingRestrictions({
     (followUserRatioMin != null && ratio < followUserRatioMin)
   ) {
     logger.log(
-      `User ${username} has too many followers compared to follows or opposite, skipping`,
+      `User ${colorName(username)} has too many followers compared to follows or opposite, skipping`,
     );
     return false;
   }
@@ -95,7 +95,9 @@ export async function followUserRespectingRestrictions({
       username,
     }) === true
   ) {
-    logger.log(`Custom follow logic returned false for ${username}, skipping`);
+    logger.log(
+      `Custom follow logic returned false for ${colorName(username)}, skipping`,
+    );
     return false;
   }
 
@@ -133,7 +135,10 @@ export async function safelyFollowUserList({
         userDataCache,
       });
     } catch (err) {
-      logger.error(`Failed to follow user ${username}, continuing`, err);
+      logger.error(
+        `Failed to follow user ${colorName(username)}, continuing`,
+        err,
+      );
       await takeScreenshot(page);
       await sleep({ seconds: 20 });
     }
@@ -156,7 +161,7 @@ export async function followUser({
   const unfollowButton = await findUnfollowButton(page);
 
   if (unfollowButton) {
-    logger.log(`We are already following ${username}, skipping`);
+    logger.log(`We are already following ${colorName(username)}, skipping`);
     await sleep({ seconds: 5 });
     return;
   }
@@ -164,10 +169,10 @@ export async function followUser({
   const followButton = await findFollowButton(page);
 
   if (!followButton) {
-    throw new Error(`Follow button not found for ${username}`);
+    throw new Error(`Follow button not found for ${colorName(username)}`);
   }
 
-  logger.log(`Following user ${username}`);
+  logger.log(`Following user ${colorName(username)}`);
 
   if (!dryRun) {
     await followButton.click();
@@ -195,10 +200,10 @@ export async function followUser({
 
     if (!unfollowButton) {
       logger.log(
-        `Button did not change state for ${username} - Sleeping 1 min`,
+        `Button did not change state for ${colorName(username)} - Sleeping 1 min`,
       );
       await sleep({ seconds: 60 });
-      throw new Error(`Button did not change state for ${username}`);
+      throw new Error(`Button did not change state for ${colorName(username)}`);
     }
   }
 
