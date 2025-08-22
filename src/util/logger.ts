@@ -29,13 +29,20 @@ export const logFinish = async () => {
 export const logStats = async () => {
   const db = await getJsonDb();
   let actions = "";
+  let areActionsDone = false;
 
   for (const [action, count] of Object.entries(db.actions)) {
     if (count > 0) {
       actions += `${count}x ${action}, `;
+      areActionsDone = true;
     }
   }
-  actions = actions.slice(0, -2);
+
   const duration = await getDurationFormatted();
-  logger.log(`[${duration} | ${actions}]`);
+  if (areActionsDone) {
+    const actionsFormatted = actions.slice(0, -2);
+    logger.log(`[${duration} | ${actionsFormatted}]`);
+  } else {
+    logger.log(`[${duration} | 0x actions]`);
+  }
 };
