@@ -18,8 +18,6 @@ export const startup = async (
   const { randomizeUserAgent, enableCookies, password, username } = options;
   const { getNumFollowedUsersThisTimeUnit, getLikedPhotosLastTimeUnit } = db;
 
-  db.startTime = new Date();
-
   logger.log("");
   logger.log("");
   logger.log("== STARTING UP ==");
