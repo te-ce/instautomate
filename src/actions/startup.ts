@@ -1,4 +1,4 @@
-import { Browser, Page } from "puppeteer";
+import puppeteer, { Browser, Page } from "puppeteer";
 import { Options } from "src/util/types";
 import { logger, logStartup } from "src/util/logger";
 import { sleep } from "src/util/util";
@@ -8,6 +8,7 @@ import { DAY_IN_MS, HOUR_IN_MS, LIMIT_COLOR } from "src/util/const";
 import { isLoggedIn } from "src/util/status";
 import { tryDeleteCookies, tryLoadCookies, trySaveCookies } from "./cookies";
 import { goHome, tryPressButton } from "./navigation";
+import { getOptions } from "src/util/options";
 
 export const startup = async (
   page: Page,
@@ -156,3 +157,32 @@ export const startup = async (
     `${LIMIT_COLOR}Have liked ${getLikedPhotosLastTimeUnit(DAY_IN_MS, 24).length} images in the last 24 hours`,
   );
 };
+
+export const setupBrowser = async () => {
+  const options = await getOptions();
+  const browser = await puppeteer.launch({
+    executablePath: process.env.IS_RUNNING_ON_DOCKER
+      ? "/usr/bin/chromium"
+      : undefined,
+    headless: options.headless,
+
+    args: [
+      // Needed for docker
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-accelerated-2d-canvas",
+      "--no-first-run",
+      "--no-zygote",
+      // commented out to fix 'Navigating frame was detached' bug
+      // see: https://github.com/puppeteer/puppeteer/issues/11515#issuecomment-2364155101
+      // '--single-process',
+      "--disable-gpu",
+
+      // If you need to proxy: (see also https://www.chromium.org/developers/design-documents/network-settings)
+      // '--proxy-server=127.0.0.1:9876',
+    ],
+  });
+
+  return browser;
+}

@@ -60,7 +60,7 @@ export async function unfollowAllUnknown({
   });
 }
 
-export async function unfollowOldFollowed({
+export async function unfollowAnyFollowed({
   ageInDays,
   limit,
   page,
@@ -112,13 +112,14 @@ export async function safelyUnfollowUserListGenerator({
   page: Page;
   userDataCache: Record<string, User>;
 }) {
+  let count = 0;
   for await (const listOrUsername of usersToUnfollow) {
     // backward compatible:
     const list = Array.isArray(listOrUsername)
       ? listOrUsername
       : [listOrUsername];
 
-    await safelyUnfollowUsers({
+    count += await safelyUnfollowUsers({
       usersToUnfollow: list,
       limit,
       condition,
@@ -126,6 +127,8 @@ export async function safelyUnfollowUserListGenerator({
       userDataCache,
     });
   }
+
+  return count;
 }
 
 export async function safelyUnfollowUsers({
@@ -304,7 +307,7 @@ export async function unfollowNonMutualFollowers({
       myUserId,
       userDataCache,
     });
-    logger.info("User follows us?", followsMe);
+    logger.log(`User ${colorName(username)} follows us: ${followsMe}`);
     return followsMe === false;
   }
 

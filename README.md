@@ -12,10 +12,10 @@ Also added new features like muting followed users and generally keeping the fea
   - Else run the bot with `npm run start` or `npm run start your-config-name`.
 - This is also how you can have different accounts and configs and run them in parallel.
 
-Your instagram account should be set to english.
-
 # Roadmap
 
+- Fix following non mutual followers (detect mutual followers without GQL Query)
+- Fix liking images (I guess it's broken?)
 - Fix taking screenshots
 - Fix running puppeteer with chromium or firefox (`page.goto()` timeout after the initialization)
 
@@ -26,7 +26,7 @@ Your instagram account should be set to english.
 - Unfollow auto followed users (also those following us back) after a certain number of days.
 - The code automatically prevents breaching 100 follow/unfollows per hour or 700 per 24hr, to prevent bans. This can be configured.
 - Have different configs for different accounts and run them in parallel.
-- Mute followed users (follow and mute stories and posts)
+- Mute followed users (follow and mute stories and posts), so your feed keeps clean.
 
 # Tips
 
@@ -44,6 +44,9 @@ Run this on a machine with a non-cloud IP to avoid being banned
 
 - running in Docker / Pi
   - Currently running this bot with something else than chrome results in a timeout of `page.goto()`, so you need to run it with chrome, chromium does not work.
+
+- Bot can't find the button and fields
+  - Usually this bot should set your Instagram to english, if it's not, you have to manually change the language to english in your instagram profile settings.
 
 # Support
 

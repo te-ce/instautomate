@@ -1,73 +1,17 @@
-import puppeteer from "puppeteer";
-
 import { Instauto } from "./bot.ts";
-import { getOptions } from "./util/options.ts";
-import { sleep } from "./util/util.ts";
 import { logger, logFinish } from "./util/logger.ts";
+import { setupBrowser } from "./actions/startup.ts";
+import { runActions } from "./actions/run.ts";
 
 (async () => {
   let browser;
-
-  const options = await getOptions();
-
   try {
-    browser = await puppeteer.launch({
-      executablePath: process.env.IS_RUNNING_ON_DOCKER
-        ? "/usr/bin/chromium"
-        : undefined,
-      headless: options.headless,
-
-      args: [
-        // Needed for docker
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--no-first-run",
-        "--no-zygote",
-        // commented out to fix 'Navigating frame was detached' bug
-        // see: https://github.com/puppeteer/puppeteer/issues/11515#issuecomment-2364155101
-        // '--single-process',
-        "--disable-gpu",
-
-        // If you need to proxy: (see also https://www.chromium.org/developers/design-documents/network-settings)
-        // '--proxy-server=127.0.0.1:9876',
-      ],
-    });
+    browser = await setupBrowser();
 
     // Create a database where state will be loaded/saved to
     const instauto = await Instauto(browser);
 
-    // This can be used to unfollow people:
-    // Will unfollow auto-followed AND manually followed accounts who are not following us back, after some time has passed
-    // await instauto.unfollowNonMutualFollowers();
-    // await instauto.sleepSeconds(10 * 60);
-
-    // Unfollow previously auto-followed users (regardless of whether or not they are following us back)
-    // after a certain amount of days (2 weeks)
-    // Leave room to do following after this too (unfollow 2/3 of maxFollowsPerDay)
-    const MIN_UNFOLLOW_COUNT = 10;
-    const unfollowedCount = await instauto.unfollowOldFollowed({
-      ageInDays: options.unfollowAfterDays.any,
-      limit:
-        MIN_UNFOLLOW_COUNT +
-        Math.floor(options.limits.maxFollowActionsPerDay * (2 / 3)),
-      page: instauto.getPage(),
-      userDataCache: instauto.userDataCache,
-    });
-
-    if (unfollowedCount > 0) await sleep({ minutes: 10 });
-
-    // Now go through each of these and follow a certain amount of their followers
-    await instauto.followUsersFollowers({
-      usersToFollowFollowersOf: options.usersToFollowFollowersOf,
-      maxFollowsTotal: options.limits.maxFollowActionsPerDay - unfollowedCount,
-      skipPrivate: options.skipPrivate,
-      enableLikeImages: options.enableActions.likeImages,
-      likeImagesMax: options.limits.maxLikesPerDay,
-      page: instauto.getPage(),
-      userDataCache: instauto.userDataCache,
-    });
+    await runActions(instauto);
   } catch (err) {
     logger.error(err);
   } finally {

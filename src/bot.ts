@@ -18,7 +18,7 @@ import {
   safelyUnfollowUsers,
   unfollowAllUnknown,
   unfollowNonMutualFollowers,
-  unfollowOldFollowed,
+  unfollowAnyFollowed,
   unfollowUser,
 } from "./actions/interaction/unfollow.ts";
 import {
@@ -51,7 +51,7 @@ export const Instauto = async (browser: Browser) => {
     followUserFollowers: processUserFollowers,
     unfollowNonMutualFollowers,
     unfollowAllUnknown,
-    unfollowOldFollowed,
+    unfollowAnyFollowed,
     followUser,
     unfollowUser,
     likeUserImages,
