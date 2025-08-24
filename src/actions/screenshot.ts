@@ -5,16 +5,16 @@ import { getOptions } from "../util/options";
 import fs from "fs";
 
 export async function takeScreenshot(page: Page) {
-  const { screenshotsPath, enableTakingScreenshots } = await getOptions();
+  const { paths, enableActions } = await getOptions();
 
-  if (!enableTakingScreenshots) {
+  if (!enableActions.takingScreenshots) {
     return;
   }
 
   try {
     const fileName = `${new Date().toString()}.jpg`;
 
-    const screenshotDirectory = join(screenshotsPath, fileName);
+    const screenshotDirectory = join(paths.screenshots, fileName);
     if (!fs.existsSync(screenshotDirectory)) {
       logger.log(
         "Screenshot does not exist, creating directory",
@@ -25,7 +25,7 @@ export async function takeScreenshot(page: Page) {
 
     logger.log("Taking screenshot", fileName);
     await page.screenshot({
-      path: join(screenshotsPath, fileName).toString() as `${string}.jpeg`,
+      path: join(paths.screenshots, fileName).toString() as `${string}.jpeg`,
       type: "jpeg",
       quality: 30,
     });

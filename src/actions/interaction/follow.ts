@@ -24,14 +24,9 @@ export async function followUserRespectingRestrictions({
 }) {
   const db = await getJsonDb();
   const {
-    followUserWithMaxFollowers,
-    followUserWithMaxFollowing,
-    followUserWithMinFollowers,
-    followUserWithMinFollowing,
-    followUserRatioMax,
-    followUserRatioMin,
-    followUserFilterFn,
+    followUserFilters,
   } = await getOptions();
+  const { followRatioMin, followRatioMax, followWithMinFollowers, followWithMinFollowing, followWithMaxFollowers, followWithMaxFollowing, followFilterFn } = followUserFilters;
 
   const prevFollowedUser = db.prevFollowedUsers[username];
   const prevUnfollowedUser = db.prevUnfollowedUsers[username];
@@ -61,14 +56,14 @@ export async function followUserRespectingRestrictions({
     return false;
   }
   if (
-    (followUserWithMaxFollowers != null &&
-      followerCount > followUserWithMaxFollowers) ||
-    (followUserWithMaxFollowing != null &&
-      followsCount > followUserWithMaxFollowing) ||
-    (followUserWithMinFollowers != null &&
-      followerCount < followUserWithMinFollowers) ||
-    (followUserWithMinFollowing != null &&
-      followsCount < followUserWithMinFollowing)
+    (followWithMaxFollowers != null &&
+      followerCount > followWithMaxFollowers) ||
+    (followWithMaxFollowing != null &&
+      followsCount > followWithMaxFollowing) ||
+    (followWithMinFollowers != null &&
+      followerCount < followWithMinFollowers) ||
+    (followWithMinFollowing != null &&
+      followsCount < followWithMinFollowing)
   ) {
     logger.log(
       `User ${colorName(username)} has too many or too few followers or following, skipping.`,
@@ -80,8 +75,8 @@ export async function followUserRespectingRestrictions({
     return false;
   }
   if (
-    (followUserRatioMax != null && ratio > followUserRatioMax) ||
-    (followUserRatioMin != null && ratio < followUserRatioMin)
+    (followRatioMax != null && ratio > followRatioMax) ||
+    (followRatioMin != null && ratio < followRatioMin)
   ) {
     logger.log(
       `User ${colorName(username)} has too many followers compared to follows or opposite, skipping`,
@@ -89,9 +84,9 @@ export async function followUserRespectingRestrictions({
     return false;
   }
   if (
-    followUserFilterFn !== null &&
-    typeof followUserFilterFn === "function" &&
-    !followUserFilterFn({
+    followFilterFn !== null &&
+    typeof followFilterFn === "function" &&
+    !followFilterFn({
       username,
     }) === true
   ) {
@@ -154,7 +149,7 @@ export async function followUser({
   page: Page;
   userDataCache: Record<string, User>;
 }) {
-  const { dryRun, muteUsers } = await getOptions();
+  const { dryRun, enableActions } = await getOptions();
   const db = await getJsonDb();
 
   await navigateToUserAndGetData({ username, page, userDataCache });
@@ -187,11 +182,11 @@ export async function followUser({
       username,
       time: new Date().getTime(),
       href: "",
-      isMuted: muteUsers,
+      isMuted: enableActions.muteUsers,
     };
     if (!unfollowButton) entry.failed = true;
 
-    if (muteUsers) {
+    if (enableActions.muteUsers) {
       await toggleMuteUser(page, username, true);
     }
 

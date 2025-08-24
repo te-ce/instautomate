@@ -48,10 +48,10 @@ import { logger, logFinish } from "./util/logger.ts";
     // Leave room to do following after this too (unfollow 2/3 of maxFollowsPerDay)
     const MIN_UNFOLLOW_COUNT = 10;
     const unfollowedCount = await instauto.unfollowOldFollowed({
-      ageInDays: options.unfollowAfterDays,
+      ageInDays: options.unfollowAfterDays.any,
       limit:
         MIN_UNFOLLOW_COUNT +
-        Math.floor(options.maxFollowActionsPerDay * (2 / 3)),
+        Math.floor(options.limits.maxFollowActionsPerDay * (2 / 3)),
       page: instauto.getPage(),
       userDataCache: instauto.userDataCache,
     });
@@ -61,10 +61,10 @@ import { logger, logFinish } from "./util/logger.ts";
     // Now go through each of these and follow a certain amount of their followers
     await instauto.followUsersFollowers({
       usersToFollowFollowersOf: options.usersToFollowFollowersOf,
-      maxFollowsTotal: options.maxFollowActionsPerDay - unfollowedCount,
+      maxFollowsTotal: options.limits.maxFollowActionsPerDay - unfollowedCount,
       skipPrivate: options.skipPrivate,
-      enableLikeImages: options.enableLikeImages,
-      likeImagesMax: options.maxLikesPerDay,
+      enableLikeImages: options.enableActions.likeImages,
+      likeImagesMax: options.limits.maxLikesPerDay,
       page: instauto.getPage(),
       userDataCache: instauto.userDataCache,
     });

@@ -16,7 +16,7 @@ export const getJsonDb = async () => {
 };
 
 export const initJsonDb = async () => {
-  const options = await getOptions();
+  const { paths } = await getOptions();
   let prevFollowedUsers: Record<string, User> = {};
   let prevUnfollowedUsers: Record<string, User> = {};
   let prevLikedPhotos: User[] = [];
@@ -26,15 +26,15 @@ export const initJsonDb = async () => {
   async function trySaveDb() {
     try {
       await fs.writeFile(
-        options.followedDbPath,
+        paths.followed,
         JSON.stringify(Object.values(prevFollowedUsers)),
       );
       await fs.writeFile(
-        options.unfollowedDbPath,
+        paths.unfollowed,
         JSON.stringify(Object.values(prevUnfollowedUsers)),
       );
       await fs.writeFile(
-        options.likedPhotosDbPath,
+        paths.likedPhotos,
         JSON.stringify(prevLikedPhotos),
       );
     } catch (err) {
@@ -45,7 +45,7 @@ export const initJsonDb = async () => {
   async function tryLoadDb() {
     try {
       prevFollowedUsers = keyBy(
-        JSON.parse(await fs.readFile(options.followedDbPath, "utf8")),
+        JSON.parse(await fs.readFile(paths.followed, "utf8")),
         "username",
       );
     } catch (err) {
@@ -53,7 +53,7 @@ export const initJsonDb = async () => {
     }
     try {
       prevUnfollowedUsers = keyBy(
-        JSON.parse(await fs.readFile(options.unfollowedDbPath, "utf8")),
+        JSON.parse(await fs.readFile(paths.unfollowed, "utf8")),
         "username",
       );
     } catch (err) {
@@ -61,7 +61,7 @@ export const initJsonDb = async () => {
     }
     try {
       prevLikedPhotos = JSON.parse(
-        await fs.readFile(options.likedPhotosDbPath, "utf8"),
+        await fs.readFile(paths.likedPhotos, "utf8"),
       );
     } catch (err) {
       logger.warn("No likes database found", err);

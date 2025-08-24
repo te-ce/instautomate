@@ -56,7 +56,8 @@ export async function haveRecentlyFollowedUser(username: string) {
 
   if (!followedUserEntry) return false; // We did not previously follow this user, so don't know
   return (
-    new Date().getTime() - followedUserEntry.time < unfollowAfterDays * DAY_IN_MS
+    new Date().getTime() - followedUserEntry.time <
+    unfollowAfterDays.any * DAY_IN_MS
   );
 }
 

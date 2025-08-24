@@ -1,38 +1,42 @@
 import { Options } from "src/util/types";
 
-export const options: Omit<
-  Options,
-  | "cookiesPath"
-  | "followedDbPath"
-  | "unfollowedDbPath"
-  | "likedPhotosDbPath"
-  | "screenshotsPath"
-  | "password"
-> = {
+export const options: Omit<Options, "paths" | "password"> = {
   headless: false,
   username: "your_username",
 
   enableCookies: true,
   randomizeUserAgent: true,
 
-  maxFollowsPerHour: "unlimited",
-  maxFollowActionsPerDay: 50,
-  maxLikesPerDay: 30,
+  limits: {
+    maxFollowsPerHour: "unlimited",
+    maxFollowActionsPerDay: 50,
+    maxLikesPerDay: 30,
+  },
   skipPrivate: true,
-  enableLikeImages: false,
-  muteUsers: false,
+  enableActions: {
+    likeImages: false,
+    follow: true,
+    unfollowAny: true,
+    unfollowNonMutual: true,
+    muteUsers: false,
+    takingScreenshots: false,
+  },
 
-  followUserRatioMin: 0.2,
-  followUserRatioMax: 4.0,
-  followUserWithMinFollowing: null,
-  followUserWithMaxFollowing: null,
-  followUserWithMaxFollowers: null,
-  followUserWithMinFollowers: null,
+  followUserFilters: {
+    followRatioMin: 0.2,
+    followRatioMax: 4.0,
+    followWithMaxFollowers: null,
+    followWithMaxFollowing: null,
+    followWithMinFollowers: null,
+    followWithMinFollowing: null,
+    followFilterFn: null,
+    likeMediaFilterFn: null,
+  },
 
-  followUserFilterFn: null,
-  likeMediaFilterFn: null,
-
-  unfollowAfterDays: 7,
+  unfollowAfterDays: {
+    any: 7,
+    nonMutual: 3,
+  },
 
   usersToFollowFollowersOf: [""],
   excludeUsers: [""],

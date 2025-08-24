@@ -11,11 +11,10 @@ class DailyLimitReachedError extends Error {
   }
 }
 const {
-  maxFollowActionsPerDay,
-  maxLikesPerDay,
-  maxFollowsPerHour,
-  enableLikeImages,
+  limits,
+  enableActions,
 } = await getOptions();
+const { maxFollowActionsPerDay, maxLikesPerDay, maxFollowsPerHour } = limits;
 
 async function checkReachedFollowedUserDayLimit() {
   const db = await getJsonDb();
@@ -53,7 +52,7 @@ async function checkReachedFollowedUserHourLimit() {
 async function checkReachedLikedUserDayLimit() {
   const db = await getJsonDb();
 
-  if (!enableLikeImages) {
+  if (!enableActions.likeImages) {
     return;
   }
   const currentLikesCount = db.getLikedPhotosLastTimeUnit(DAY_IN_MS, 24).length;

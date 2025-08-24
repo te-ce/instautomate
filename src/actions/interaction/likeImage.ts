@@ -157,7 +157,7 @@ export async function likeUserImages({
   page: Page;
   userDataCache: Record<string, User>;
 }) {
-  const { likeMediaFilterFn, dryRun } = await getOptions();
+  const { dryRun, followUserFilters } = await getOptions();
 
   if (
     !likeImagesMin ||
@@ -187,7 +187,7 @@ export async function likeUserImages({
     dryRun: dryRun,
     likeImagesMin,
     likeImagesMax,
-    shouldLikeMedia: likeMediaFilterFn,
+    shouldLikeMedia: followUserFilters.likeMediaFilterFn,
   });
 }
 

@@ -57,11 +57,13 @@ export const initOptions = async () => {
     const optionsWithPaths: Options = {
       ...importedOptions,
       password,
-      cookiesPath: path.join(basePath, env, "cookies.json"),
-      followedDbPath: path.join(basePath, env, "followed.json"),
-      unfollowedDbPath: path.join(basePath, env, "unfollowed.json"),
-      likedPhotosDbPath: path.join(basePath, env, "liked-photos.json"),
-      screenshotsPath: path.join(basePath, env, "screenshots"),
+      paths: {
+      cookies: path.join(basePath, env, "cookies.json"),
+      followed: path.join(basePath, env, "followed.json"),
+      unfollowed: path.join(basePath, env, "unfollowed.json"),
+      likedPhotos: path.join(basePath, env, "liked-photos.json"),
+      screenshots: path.join(basePath, env, "screenshots"),
+      },
       headless,
     };
 
