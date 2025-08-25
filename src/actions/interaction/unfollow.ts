@@ -17,48 +17,9 @@ import {
   haveRecentlyFollowedUser,
   doesUserFollowMe,
 } from "src/util/status";
-import {
-  getFollowersOrFollowingGenerator,
-  navigateToUserAndGetData,
-} from "../data";
+import { navigateToUserAndGetData } from "../data";
 import { DAY_IN_MS } from "src/util/const";
 import { toggleMuteUser } from "./toggleSilent";
-
-export async function unfollowAllUnknown({
-  limit,
-  myUserId,
-  page,
-  userDataCache,
-}: {
-  limit: number;
-  myUserId: string;
-  page: Page;
-  userDataCache: Record<string, User>;
-}) {
-  const db = await getJsonDb();
-  const { excludeUsers } = await getOptions();
-  logger.log("Unfollowing all except excludes and auto followed");
-
-  const unfollowUsersGenerator = getFollowersOrFollowingGenerator({
-    userId: myUserId,
-    getFollowers: false,
-    page,
-  });
-
-  async function condition(username: string) {
-    if (db.prevFollowedUsers[username]) return false; // we followed this user, so it's not unknown
-    if (excludeUsers.includes(username)) return false; // User is excluded by exclude list
-    return true;
-  }
-
-  return safelyUnfollowUserListGenerator({
-    usersToUnfollow: unfollowUsersGenerator,
-    limit,
-    condition,
-    page,
-    userDataCache,
-  });
-}
 
 export async function unfollowNonMutualFollowers({
   limit,
@@ -143,38 +104,6 @@ export async function unfollowAnyFollowed({
     page,
     userDataCache,
   });
-}
-
-export async function safelyUnfollowUserListGenerator({
-  usersToUnfollow,
-  limit,
-  condition,
-  page,
-  userDataCache,
-}: {
-  usersToUnfollow: AsyncGenerator<any[], string[], unknown>;
-  limit: number;
-  condition: (username: string) => Promise<boolean>;
-  page: Page;
-  userDataCache: Record<string, User>;
-}) {
-  let count = 0;
-  for await (const listOrUsername of usersToUnfollow) {
-    // backward compatible:
-    const list = Array.isArray(listOrUsername)
-      ? listOrUsername
-      : [listOrUsername];
-
-    count += await safelyUnfollowUsers({
-      usersToUnfollow: list,
-      limit,
-      condition,
-      page,
-      userDataCache,
-    });
-  }
-
-  return count;
 }
 
 export async function safelyUnfollowUsers({

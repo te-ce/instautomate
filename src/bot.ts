@@ -14,9 +14,7 @@ import {
   processUsersFollowers,
 } from "./actions/data.ts";
 import {
-  safelyUnfollowUserListGenerator,
   safelyUnfollowUsers,
-  unfollowAllUnknown,
   unfollowNonMutualFollowers,
   unfollowAnyFollowed,
   unfollowUser,
@@ -50,7 +48,6 @@ export const Instauto = async (browser: Browser) => {
   return {
     followUserFollowers: processUserFollowers,
     unfollowNonMutualFollowers,
-    unfollowAllUnknown,
     unfollowAnyFollowed,
     followUser,
     unfollowUser,
@@ -58,7 +55,6 @@ export const Instauto = async (browser: Browser) => {
     listManuallyFollowedUsers,
     getFollowersOrFollowing,
     getUsersWhoLikedContent,
-    safelyUnfollowUserListGenerator,
     safelyUnfollowUsers,
     safelyFollowUserList,
     getPage,
