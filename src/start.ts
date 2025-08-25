@@ -1,7 +1,7 @@
 import { Instauto } from "./bot.ts";
 import { logger, logFinish } from "./util/logger.ts";
 import { setupBrowser } from "./actions/startup.ts";
-import { runActions } from "./actions/run.ts";
+import { runActions } from "./actions/runActions.ts";
 
 (async () => {
   let browser;

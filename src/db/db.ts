@@ -3,6 +3,7 @@ import keyBy from "lodash/keyBy";
 import { User } from "src/util/types";
 import { getOptions } from "../util/options";
 import { logger } from "src/util/logger";
+import { DAY_IN_MS, HOUR_IN_MS } from "src/util/const";
 
 export type JsonDB = Awaited<ReturnType<typeof initJsonDb>>;
 
@@ -117,6 +118,19 @@ export const initJsonDb = async () => {
     );
   }
 
+  const getHourlyFollowedUsersCount = () => {
+    const resetHour = new Date().getHours();
+    return getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, resetHour);
+  };
+
+  const getDailyFollowedUsersCount = () => {
+    return getNumFollowedUsersThisTimeUnit(DAY_IN_MS, 24);
+  };
+
+  const getLikedPhotosCount = () => {
+    return getLikedPhotosLastTimeUnit(DAY_IN_MS, 24).length;
+  };
+
   await tryLoadDb();
 
   return {
@@ -131,6 +145,9 @@ export const initJsonDb = async () => {
     prevUnfollowedUsers,
     prevLikedPhotos,
     getNumFollowedUsersThisTimeUnit,
+    getHourlyFollowedUsersCount,
+    getDailyFollowedUsersCount,
+    getLikedPhotosCount,
     startTime,
     actions,
   };

@@ -4,7 +4,7 @@ import { logStats, logger } from "src/util/logger";
 import { getOptions } from "src/util/options";
 import { sleep } from "src/util/util";
 
-class DailyLimitReachedError extends Error {
+export class DailyLimitReachedError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "DailyLimitReachedError";
