@@ -127,6 +127,7 @@ export interface User {
   followsCount?: number;
   isPrivate?: boolean;
   isMuted?: boolean;
+  followsMe?: boolean;
 }
 
 export type Media = {

@@ -118,6 +118,12 @@ export const initJsonDb = async () => {
     );
   }
 
+  const setUserFollowedMe = async (username: string) => {
+    const user = prevFollowedUsers[username];
+    prevFollowedUsers[username] = { ...user, followsMe: true };
+    await trySaveDb();
+  };
+
   const getHourlyFollowedUsersCount = () => {
     const resetHour = new Date().getHours();
     return getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, resetHour);
@@ -150,5 +156,6 @@ export const initJsonDb = async () => {
     getLikedPhotosCount,
     startTime,
     actions,
+    setUserFollowedMe,
   };
 };

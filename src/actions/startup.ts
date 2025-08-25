@@ -4,7 +4,7 @@ import { logger, logStartup } from "src/util/logger";
 import { sleep } from "src/util/util";
 import UserAgent from "user-agents";
 import { getJsonDb } from "src/db/db";
-import { DAY_IN_MS, HOUR_IN_MS, LIMIT_COLOR } from "src/util/const";
+import { LIMIT_COLOR } from "src/util/const";
 import { isLoggedIn } from "src/util/status";
 import { tryDeleteCookies, tryLoadCookies, trySaveCookies } from "./cookies";
 import { goHome, tryPressButton } from "./navigation";
@@ -17,7 +17,6 @@ export const startup = async (
 ) => {
   const db = await getJsonDb();
   const { randomizeUserAgent, enableCookies, password, username } = options;
-  const { getNumFollowedUsersThisTimeUnit, getLikedPhotosLastTimeUnit } = db;
 
   await logStartup();
 

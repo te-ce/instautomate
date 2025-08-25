@@ -14,7 +14,6 @@ Also added new features like muting followed users and generally keeping the fea
 
 # Roadmap
 
-- Fix following non mutual followers (detect mutual followers without GQL Query)
 - Fix liking images (I guess it's broken?)
 - Fix taking screenshots
 - Fix running puppeteer with chromium or firefox (`page.goto()` timeout after the initialization)

@@ -18,7 +18,6 @@ export const runActions = async (
   if (options.enableActions.unfollowNonMutual) {
     const unfollowedNonMutual = await instauto.unfollowNonMutualFollowers({
       limit: Math.floor(options.limits.maxFollowActionsPerDay * (2 / 3)),
-      myUserId: options.username,
       page: instauto.getPage(),
       userDataCache: instauto.userDataCache,
     });
@@ -34,7 +33,6 @@ export const runActions = async (
   if (options.enableActions.unfollowAny) {
     const MIN_UNFOLLOW_COUNT = 10;
     const unfollowedAny = await instauto.unfollowAnyFollowed({
-      ageInDays: options.unfollowAfterDays.any,
       limit:
         MIN_UNFOLLOW_COUNT +
         Math.floor(options.limits.maxFollowActionsPerDay * (2 / 3)),

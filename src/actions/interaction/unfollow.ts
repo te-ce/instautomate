@@ -60,33 +60,79 @@ export async function unfollowAllUnknown({
   });
 }
 
-export async function unfollowAnyFollowed({
-  ageInDays,
+export async function unfollowNonMutualFollowers({
   limit,
   page,
   userDataCache,
 }: {
-  ageInDays: number;
+  limit: number;
+  page: Page;
+  userDataCache: Record<string, User>;
+}) {
+  const { excludeUsers, unfollowAfterDays } = await getOptions();
+  const db = await getJsonDb();
+  const usersToUnfollow = await getUsersToUnfollowSince(
+    unfollowAfterDays.nonMutual,
+  );
+
+  logger.log(`Unfollowing non-mutual followers (limit ${limit})...`);
+
+  async function condition(username: string) {
+    if (excludeUsers.includes(username)) return false; // User is excluded by exclude list
+    if (await haveRecentlyFollowedUser(username)) {
+      logger.log(
+        `Have recently followed user ${colorName(username)}, skipping`,
+      );
+      return false;
+    }
+
+    if (db.prevFollowedUsers[username]?.followsMe) {
+      logger.log(`User ${colorName(username)} follows us, skipping`);
+      return false;
+    }
+
+    const followsMe = await doesUserFollowMe({
+      page,
+      username,
+    });
+    return !followsMe;
+  }
+
+  return safelyUnfollowUsers({
+    usersToUnfollow,
+    limit,
+    condition,
+    page,
+    userDataCache,
+  });
+}
+
+export async function unfollowAnyFollowed({
+  limit,
+  page,
+  userDataCache,
+}: {
   limit: number;
   page: Page;
   userDataCache: Record<string, User>;
 }) {
   const db = await getJsonDb();
-  assert(ageInDays >= 0);
+  const { unfollowAfterDays } = await getOptions();
+  assert(unfollowAfterDays.any >= 0);
   const { excludeUsers } = await getOptions();
 
   logger.log(
-    `Unfollowing currently followed users who were auto-followed more than ${ageInDays} days ago (limit ${limit})...`,
+    `Unfollowing currently followed users who were auto-followed more than ${unfollowAfterDays.any} days ago (limit ${limit})...`,
   );
 
-  const usersToUnfollow = await getUsersToUnfollowSince(ageInDays);
+  const usersToUnfollow = await getUsersToUnfollowSince(unfollowAfterDays.any);
 
   async function condition(username: string) {
     return (
       db.prevFollowedUsers[username] &&
       !excludeUsers.includes(username) &&
       (new Date().getTime() - db.prevFollowedUsers[username].time) / DAY_IN_MS >
-        ageInDays
+        unfollowAfterDays.any
     );
   }
 
@@ -174,7 +220,7 @@ export async function safelyUnfollowUsers({
           if (noActionTaken) {
             await sleep({ seconds: 5, silent: true });
           } else {
-            await sleep({ seconds: 15 });
+            await sleep({ seconds: 10 });
             peopleUnfollowed += 1;
 
             if (peopleUnfollowed % 10 === 0) {
@@ -269,55 +315,6 @@ export async function unfollowUser({
   await sleep({ seconds: 15 });
 
   return res;
-}
-
-export async function unfollowNonMutualFollowers({
-  limit,
-  myUserId,
-  page,
-  userDataCache,
-}: {
-  limit: number;
-  myUserId: string;
-  page: Page;
-  userDataCache: Record<string, User>;
-}) {
-  const { excludeUsers } = await getOptions();
-
-  logger.log(`Unfollowing non-mutual followers (limit ${limit})...`);
-
-  const allFollowingGenerator = getFollowersOrFollowingGenerator({
-    userId: myUserId || "",
-    getFollowers: false,
-    page,
-  });
-
-  async function condition(username: string) {
-    if (excludeUsers.includes(username)) return false; // User is excluded by exclude list
-    if (await haveRecentlyFollowedUser(username)) {
-      logger.log(
-        `Have recently followed user ${colorName(username)}, skipping`,
-      );
-      return false;
-    }
-
-    const followsMe = await doesUserFollowMe({
-      page,
-      username,
-      myUserId,
-      userDataCache,
-    });
-    logger.log(`User ${colorName(username)} follows us: ${followsMe}`);
-    return followsMe === false;
-  }
-
-  return safelyUnfollowUserListGenerator({
-    usersToUnfollow: allFollowingGenerator,
-    limit,
-    condition,
-    page,
-    userDataCache,
-  });
 }
 
 export async function getUsersToUnfollowSince(daysPassed: number) {

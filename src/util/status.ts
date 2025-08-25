@@ -1,12 +1,11 @@
 import { Page } from "puppeteer";
-import { logger } from "./logger";
+import { colorName, logger } from "./logger";
 import { escapeXpathStr, getUserPageUrl, sleep } from "./util";
 import { tryDeleteCookies } from "src/actions/cookies";
 import { getJsonDb } from "src/db/db";
 import { getOptions } from "./options";
-import { navigateToUserAndGetProfileId } from "src/actions/data";
-import { User } from "./types";
 import { DAY_IN_MS } from "./const";
+import { navigateToUser } from "src/actions/navigation";
 
 export async function isLoggedIn(page: Page) {
   return (await page.$$('xpath///*[@aria-label="Home"]')).length === 1;
@@ -57,54 +56,46 @@ export async function haveRecentlyFollowedUser(username: string) {
   if (!followedUserEntry) return false; // We did not previously follow this user, so don't know
   return (
     new Date().getTime() - followedUserEntry.time <
-    unfollowAfterDays.any * DAY_IN_MS
+    unfollowAfterDays.nonMutual * DAY_IN_MS
   );
 }
 
 export async function doesUserFollowMe({
   page,
   username,
-  myUserId,
-  userDataCache,
 }: {
   page: Page;
   username: string;
-  myUserId: string;
-  userDataCache: Record<string, User>;
 }) {
+  const db = await getJsonDb();
+  const { username: myUsername } = await getOptions();
   try {
     logger.info("Checking if user", username, "follows us");
-    const userId = await navigateToUserAndGetProfileId(
-      username,
-      page,
-      userDataCache,
-    );
+    await navigateToUser(page, username);
 
-    const elementHandles = await page.$$(
+    const followListButton = await page.$$(
       "xpath///a[contains(.,' following')][contains(@href,'/following')]",
     );
-    if (elementHandles.length === 0)
-      throw new Error("Following button not found");
 
-    const [foundResponse] = await Promise.all([
-      page.waitForResponse((response) => {
-        const request = response.request();
-        return (
-          request.method() === "GET" &&
-          new RegExp(
-            `instagram.com/api/v1/friendships/${userId}/following/`,
-          ).test(request.url())
-        );
-      }),
-      elementHandles[0].click(),
-    ]);
+    if (followListButton.length === 0) {
+      logger.log("Following button not found");
+      return false;
+    }
 
-    const { users } = JSON.parse(await foundResponse.text());
-    if (users.length < 2) throw new Error("Unable to find user follows list");
-    return users.some(
-      (user: { pk: string; username: string }) =>
-        String(user.pk) === String(myUserId) || user.username === username,
-    ); // If they follow us, we will show at the top of the list
+    await followListButton[0].click();
+    await sleep({ seconds: 4, silent: true });
+
+    const span = await page.$$(
+      `xpath///span[contains(text(), '${myUsername}')]`,
+    );
+    const followsMe = span.length > 0;
+
+    if (followsMe) {
+      await db.setUserFollowedMe(username);
+    }
+
+    logger.log(`User ${colorName(username)} follows us: ${followsMe}`);
+    return followsMe;
   } catch (err) {
     logger.error("Failed to check if user follows us", err);
     return undefined;
