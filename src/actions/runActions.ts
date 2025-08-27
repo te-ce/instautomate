@@ -24,7 +24,7 @@ export const runActions = async (
 
     unfollowedCount += unfollowedNonMutual;
 
-    await sleep({ minutes: 10 });
+    await sleep({ minutes: 1 });
   }
 
   // Unfollow previously auto-followed users (regardless of whether or not they are following us back)
@@ -42,7 +42,7 @@ export const runActions = async (
 
     unfollowedCount += unfollowedAny;
 
-    if (unfollowedCount > 0) await sleep({ minutes: 10 });
+    if (unfollowedCount > 0) await sleep({ minutes: 1 });
   }
 
   // Now go through each of these and follow a certain amount of their followers
