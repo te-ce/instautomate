@@ -8,7 +8,6 @@ import { WARNING_COLOR } from "src/util/const";
 export const runActions = async (
   instauto: Awaited<ReturnType<typeof Instauto>>,
 ) => {
-  await throttle();
   const options = await getOptions();
 
   let unfollowedCount = 0;
@@ -58,6 +57,7 @@ export const runActions = async (
     });
   }
 
+  await throttle();
   logger.log(`${WARNING_COLOR}Limits not reached, running actions again`);
   await sleep({ minutes: 2 });
   await runActions(instauto);

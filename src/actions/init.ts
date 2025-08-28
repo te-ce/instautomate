@@ -3,19 +3,17 @@ import { Options } from "src/util/types";
 import { logger, logStartup } from "src/util/logger";
 import { sleep } from "src/util/util";
 import UserAgent from "user-agents";
-import { getJsonDb } from "src/db/db";
-import { LIMIT_COLOR } from "src/util/const";
 import { isLoggedIn } from "src/util/status";
 import { tryDeleteCookies, tryLoadCookies, trySaveCookies } from "./cookies";
 import { goHome, tryPressButton } from "./navigation";
 import { getOptions } from "src/util/options";
+import { throttle } from "./limit";
 
-export const startup = async (
+export const initialization = async (
   page: Page,
   browser: Browser,
   options: Options,
 ) => {
-  const db = await getJsonDb();
   const { randomizeUserAgent, enableCookies, password, username } = options;
 
   await logStartup();
@@ -145,16 +143,7 @@ export const startup = async (
   );
 
   await trySaveCookies(browser);
-
-  logger.log(
-    `${LIMIT_COLOR}Have followed/unfollowed ${db.getHourlyFollowedUsersCount()} in the last hour`,
-  );
-  logger.log(
-    `${LIMIT_COLOR}Have followed/unfollowed ${db.getDailyFollowedUsersCount()} in the last 24 hours`,
-  );
-  logger.log(
-    `${LIMIT_COLOR}Have liked ${db.getLikedPhotosCount()} images in the last 24 hours`,
-  );
+  await throttle();
 };
 
 export const setupBrowser = async () => {
@@ -184,4 +173,4 @@ export const setupBrowser = async () => {
   });
 
   return browser;
-}
+};

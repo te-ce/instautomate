@@ -2,7 +2,6 @@ import { getJsonDb } from "./db/db.ts";
 import { Browser } from "puppeteer";
 import { getOptions } from "./util/options.ts";
 import { User } from "./util/types.ts";
-import { startup } from "./actions/startup.ts";
 import { doesUserFollowMe } from "./util/status.ts";
 import {
   getFollowersOrFollowing,
@@ -24,6 +23,7 @@ import {
   safelyFollowUserList,
 } from "./actions/interaction/follow.ts";
 import { likeUserImages } from "./actions/interaction/likeImage.ts";
+import { initialization } from "./actions/init.ts";
 
 export const Instauto = async (browser: Browser) => {
   const options = await getOptions();
@@ -31,7 +31,7 @@ export const Instauto = async (browser: Browser) => {
   const page = await browser.newPage();
   const userDataCache: Record<string, User> = {};
 
-  await startup(page, browser, options);
+  await initialization(page, browser, options);
 
   const myUserId = await navigateToUserAndGetProfileId(
     username,

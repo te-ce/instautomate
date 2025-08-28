@@ -12,7 +12,7 @@ import {
 
 type ConsoleMethod = "log" | "info" | "debug" | "error" | "trace" | "warn";
 
-export const log = (fn: ConsoleMethod, ...args: any[]) =>
+export const log = (fn: ConsoleMethod, ...args: unknown[]) =>
   console[fn](
     `${DATE_COLOR}${new Date().toISOString()}${COLORS.RESET}`,
     ...args,
@@ -20,7 +20,7 @@ export const log = (fn: ConsoleMethod, ...args: any[]) =>
 export const logger = Object.fromEntries(
   ["log", "info", "debug", "error", "trace", "warn"].map((fn) => [
     fn,
-    (...args: any[]) => log(fn as ConsoleMethod, ...args, COLORS.RESET),
+    (...args: unknown[]) => log(fn as ConsoleMethod, ...args, COLORS.RESET),
   ]),
 );
 

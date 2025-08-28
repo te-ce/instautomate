@@ -3,7 +3,7 @@ import { HOUR_IN_MS, INSTAGRAM_URL, MINUTE_IN_MS, SECOND_IN_MS } from "./const";
 import { logger } from "./logger";
 import { getJsonDb } from "src/db/db";
 
-export function shuffleArray(arrayIn: any[]) {
+export function shuffleArray<T>(arrayIn: T[]): T[] {
   const array = [...arrayIn];
   for (let i = array.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
