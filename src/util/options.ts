@@ -1,4 +1,4 @@
-import { logger } from "./logger.js";
+import { log } from "./logger";
 import fs from "fs";
 import path from "path";
 import { Options, OptionsSchema } from "./types.js";
@@ -58,11 +58,11 @@ export const initOptions = async () => {
       ...importedOptions,
       password,
       paths: {
-      cookies: path.join(basePath, env, "cookies.json"),
-      followed: path.join(basePath, env, "followed.json"),
-      unfollowed: path.join(basePath, env, "unfollowed.json"),
-      likedPhotos: path.join(basePath, env, "liked-photos.json"),
-      screenshots: path.join(basePath, env, "screenshots"),
+        cookies: path.join(basePath, env, "cookies.json"),
+        followed: path.join(basePath, env, "followed.json"),
+        unfollowed: path.join(basePath, env, "unfollowed.json"),
+        likedPhotos: path.join(basePath, env, "liked-photos.json"),
+        screenshots: path.join(basePath, env, "screenshots"),
       },
       headless,
     };
@@ -70,7 +70,7 @@ export const initOptions = async () => {
     options = OptionsSchema.parse(optionsWithPaths);
     return options;
   } catch (error) {
-    logger.error(`Error loading options from ${optionsPath}:`, error);
+    log(`Error loading options from ${optionsPath}:`, error);
     throw error;
   }
 };

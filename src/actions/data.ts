@@ -1,4 +1,4 @@
-import { colorName, logger } from "src/util/logger";
+import { colorName, log } from "src/util/logger";
 import { gotoUrl, navigateToUser } from "./navigation";
 import { LIMIT_COLOR, INSTAGRAM_URL } from "src/util/const";
 import { Page } from "puppeteer";
@@ -51,7 +51,7 @@ async function* graphqlQueryUsers({
     i += 1;
 
     if (hasNextPage) {
-      logger.log(`Has more pages (current ${i})`);
+      log(`Has more pages (current ${i})`);
     }
 
     yield ret;
@@ -140,11 +140,11 @@ export async function processUserFollowers({
   const enableFollow = maxFollowsPerUser > 0;
 
   if (enableFollow)
-    logger.log(
+    log(
       `Following up to ${maxFollowsPerUser} followers of ${colorName(username)}`,
     );
   if (enableLikeImages)
-    logger.log(
+    log(
       `Liking images of up to ${likeImagesMax} followers of ${colorName(username)}`,
     );
 
@@ -165,7 +165,7 @@ export async function processUserFollowers({
     getFollowers: true,
     page,
   })) {
-    logger.log("User followers batch", followersBatch);
+    log("User followers batch", followersBatch);
 
     const shuffledFollowers = shuffleArray(followersBatch);
     for (const follower of shuffledFollowers) {
@@ -173,7 +173,7 @@ export async function processUserFollowers({
 
       try {
         if (enableFollow && numFollowedForThisUser >= maxFollowsPerUser) {
-          logger.log("Have reached followed limit for this user, stopping");
+          log("Have reached followed limit for this user, stopping");
           return;
         }
 
@@ -187,7 +187,7 @@ export async function processUserFollowers({
           });
         if (didActuallyFollow) {
           numFollowedForThisUser += 1;
-          logger.log(
+          log(
             `${LIMIT_COLOR}Followed ${numFollowedForThisUser}/${maxFollowsPerUser} users for ${colorName(username)}`,
           );
         }
@@ -205,7 +205,7 @@ export async function processUserFollowers({
           });
         }
       } catch (err) {
-        logger.error(`Failed to process follower ${follower}`, err);
+        log(`Failed to process follower ${follower}`, err);
         await takeScreenshot(page);
         await sleep({ seconds: 10 });
       }
@@ -248,7 +248,7 @@ export async function processUsersFollowers({
     maxFollowsPerUser === 0 &&
     (!enableLikeImages || likeImagesMin < 1 || likeImagesMax < 1)
   ) {
-    logger.warn("Nothing to follow or like");
+    log("Nothing to follow or like");
     return;
   }
 
@@ -269,14 +269,10 @@ export async function processUsersFollowers({
       await throttle();
     } catch (err) {
       if (err instanceof Error && err.name === "DailyLimitReachedError") {
-        logger.log("Daily limit reached, stopping:", err.message);
+        log("Daily limit reached, stopping:", err.message);
         return; // Exit the loop cleanly
       }
-      logger.error(
-        "Failed to process user followers, continuing",
-        username,
-        err,
-      );
+      log("Failed to process user followers, continuing", username, err);
       await takeScreenshot(page);
       await sleep({ minutes: 1 });
     }
@@ -326,7 +322,7 @@ export async function navigateToUserAndGetProfileIdFromHtml({
     return match ? match[1] : null;
   });
 
-  logger.log(`Got profile id ${profileId} for user ${colorName(username)}`);
+  log(`Got profile id ${profileId} for user ${colorName(username)}`);
   return profileId;
 }
 
@@ -391,7 +387,7 @@ export async function navigateToUserAndGetData({
         }
       }
     } catch (err) {
-      logger.warn(
+      log(
         `Unable to get user data from page (${colorName(username)}) - This is normal`,
         err,
       );
@@ -403,10 +399,10 @@ export async function navigateToUserAndGetData({
   // intercept special XHR network request that fetches user's data and store it in a cache
   // TODO fallback to DOM to get user ID if this request fails?
   // https://github.com/mifi/SimpleInstaBot/issues/125#issuecomment-1145354294
-  // logger.log("Need to intercept network request to get user data");
+  // log("Need to intercept network request to get user data");
   // async function getUserDataFromInterceptedRequest() {
   //   const t = setTimeout(async () => {
-  //     logger.log("Unable to intercept request, will send manually");
+  //     log("Unable to intercept request, will send manually");
   //     try {
   //       await page.evaluate(async (username2) => {
   //         const response = await window.fetch(
@@ -422,7 +418,7 @@ export async function navigateToUserAndGetData({
   //       // todo `https://i.instagram.com/api/v1/users/${userId}/info/`
   //       // https://www.javafixing.com/2022/07/fixed-can-get-instagram-profile-picture.html?m=1
   //     } catch (err) {
-  //       logger.error("Failed to manually send request: ", err);
+  //       log("Failed to manually send request: ", err);
   //     }
   //   }, 5000);
 
@@ -450,7 +446,7 @@ export async function navigateToUserAndGetData({
   //   }
   // }
 
-  logger.log("Trying to get user data from HTML");
+  log("Trying to get user data from HTML");
 
   await navigateToUserWithCheck(username, page);
   const userData = await getUserDataFromPage();

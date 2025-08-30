@@ -2,14 +2,13 @@ import Instauto from "src/bot";
 import { getOptions } from "src/util/options";
 import { sleep } from "src/util/util";
 import { throttle } from "./limit";
-import { logger } from "src/util/logger";
+import { log } from "src/util/logger";
 import { WARNING_COLOR } from "src/util/const";
 
 export const runActions = async (
   instauto: Awaited<ReturnType<typeof Instauto>>,
 ) => {
   const options = await getOptions();
-
   let unfollowedCount = 0;
 
   // This can be used to unfollow people:
@@ -58,7 +57,7 @@ export const runActions = async (
   }
 
   await throttle();
-  logger.log(`${WARNING_COLOR}Limits not reached, running actions again`);
+  log(`${WARNING_COLOR}Limits not reached, running actions again`);
   await sleep({ minutes: 2 });
   await runActions(instauto);
 };

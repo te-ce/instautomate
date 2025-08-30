@@ -1,6 +1,6 @@
 import { ElementHandle, Page } from "puppeteer";
 import { INSTAGRAM_URL } from "src/util/const";
-import { colorName, logger } from "src/util/logger";
+import { colorName, log } from "src/util/logger";
 import { isAlreadyOnUserPage } from "src/util/status";
 import { escapeXpathStr, getUserPageUrl, sleep } from "src/util/util";
 
@@ -11,12 +11,12 @@ export async function tryPressButton(
 ) {
   try {
     if (elementHandles.length === 1) {
-      logger.log(`Pressing button: ${name}`);
+      log(`Pressing button: ${name}`);
       elementHandles[0].click();
       await sleep({ seconds: sleepSec });
     }
   } catch (err) {
-    logger.warn(`Failed to press button: ${name}`, err);
+    log(`Failed to press button: ${name}`, err);
   }
 }
 
@@ -32,10 +32,10 @@ export const gotoUrl = async (page: Page, url: string) =>
 export async function gotoWithRetry(page: Page, url: string) {
   const maxAttempts = 3;
   for (let attempt = 0; ; attempt += 1) {
-    logger.log(`Goto ${url}`);
+    log(`Goto ${url}`);
     const response = await gotoUrl(page, url);
     const status = response?.status();
-    logger.log("Page loaded");
+    log.temp("Page loaded");
     await sleep({ seconds: 2, silent: true });
 
     // https://www.reddit.com/r/Instagram/comments/kwrt0s/error_560/
@@ -48,9 +48,9 @@ export async function gotoWithRetry(page: Page, url: string) {
       );
     }
 
-    logger.info(`Got ${status} - Retrying request later...`);
+    log(`Got ${status} - Retrying request later...`);
     if (status === 429)
-      logger.warn(
+      log(
         "429 Too Many Requests could mean that Instagram suspects you're using a bot. You could try to use the Instagram Mobile app from the same IP for a few days first",
       );
     await sleep({ minutes: (attempt + 1) * 30 });
@@ -59,12 +59,12 @@ export async function gotoWithRetry(page: Page, url: string) {
 
 export async function navigateToUser(page: Page, username: string) {
   if (isAlreadyOnUserPage(page, username)) return true;
-  logger.log(`Navigating to user ${colorName(username)}`);
+  log(`Navigating to user ${colorName(username)}`);
 
   const url = getUserPageUrl(username);
   const status = await gotoWithRetry(page, url);
   if (status === 404) {
-    logger.warn("User page returned 404");
+    log("User page returned 404");
     return false;
   }
 
@@ -78,7 +78,7 @@ export async function navigateToUser(page: Page, username: string) {
     );
     const foundUsernameOnPage = elementHandles.length > 0;
     if (!foundUsernameOnPage)
-      logger.warn(`Cannot find text "${colorName(username)}" on page`);
+      log(`Cannot find text "${colorName(username)}" on page`);
     return foundUsernameOnPage;
   }
 

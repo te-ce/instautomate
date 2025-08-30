@@ -2,6 +2,7 @@ import { getDurationFormatted } from "./util";
 import { getJsonDb } from "src/db/db";
 import { getOptions } from "./options";
 import {
+  CLEAR_PREVIOUS,
   COLORS,
   DATE_COLOR,
   FINISH_COLOR,
@@ -10,48 +11,53 @@ import {
   USERNAME_COLOR,
 } from "./const";
 
-type ConsoleMethod = "log" | "info" | "debug" | "error" | "trace" | "warn";
+let lastLogWasTemporary = false;
 
-export const log = (fn: ConsoleMethod, ...args: unknown[]) =>
-  console[fn](
+const tempLog = (...args: unknown[]) => {
+  log(...args);
+  lastLogWasTemporary = true;
+};
+
+const log = (...args: unknown[]) => {
+  console.log(
+    lastLogWasTemporary ? CLEAR_PREVIOUS : "",
     `${DATE_COLOR}${new Date().toISOString()}${COLORS.RESET}`,
     ...args,
   );
-export const logger = Object.fromEntries(
-  ["log", "info", "debug", "error", "trace", "warn"].map((fn) => [
-    fn,
-    (...args: unknown[]) => log(fn as ConsoleMethod, ...args, COLORS.RESET),
-  ]),
-);
+  lastLogWasTemporary = false;
+};
+
+log.temp = tempLog;
+export { log };
 
 export const logStartup = async () => {
   const db = await getJsonDb();
   const { username } = await getOptions();
   const color = STARTUP_COLOR;
 
-  logger.log("");
-  logger.log("");
-  logger.log(`${color}== STARTING UP ==`);
-  logger.log(`${color}Current day: ${db.startTime.toLocaleDateString()}`);
-  logger.log(`${color}Current time: ${db.startTime.toLocaleTimeString()}`);
-  logger.log(`${color}Username: ${colorName(username)}`);
-  logger.log("");
-  logger.log("");
+  log("");
+  log("");
+  log(`${color}== STARTING UP ==`);
+  log(`${color}Current day: ${db.startTime.toLocaleDateString()}`);
+  log(`${color}Current time: ${db.startTime.toLocaleTimeString()}`);
+  log(`${color}Username: ${colorName(username)}`);
+  log("");
+  log("");
 };
 
 export const logFinish = async () => {
   const options = await getOptions();
   const color = FINISH_COLOR;
 
-  logger.log("");
-  logger.log("");
-  logger.log(`${color}== FINISHED ==`);
-  logger.log(`${color}Current day: ${new Date().toLocaleDateString()}`);
-  logger.log(`${color}Current time: ${new Date().toLocaleTimeString()}`);
-  logger.log(`${color}Username: ${colorName(options.username)}`);
+  log("");
+  log("");
+  log(`${color}== FINISHED ==`);
+  log(`${color}Current day: ${new Date().toLocaleDateString()}`);
+  log(`${color}Current time: ${new Date().toLocaleTimeString()}`);
+  log(`${color}Username: ${colorName(options.username)}`);
   await logStats();
-  logger.log("");
-  logger.log("");
+  log("");
+  log("");
 };
 
 export const logStats = async () => {
@@ -70,9 +76,9 @@ export const logStats = async () => {
   const duration = await getDurationFormatted();
   if (areActionsDone) {
     const actionsFormatted = actions.slice(0, -2);
-    logger.log(`${color}[${duration} | ${actionsFormatted}]`);
+    log(`${color}[${duration} | ${actionsFormatted}]`);
   } else {
-    logger.log(`${color}[${duration} | 0x actions]`);
+    log(`${color}[${duration} | 0x actions]`);
   }
 };
 

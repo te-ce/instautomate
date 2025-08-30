@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
 import { HOUR_IN_MS, INSTAGRAM_URL, MINUTE_IN_MS, SECOND_IN_MS } from "./const";
-import { logger } from "./logger";
+import { log } from "./logger";
 import { getJsonDb } from "src/db/db";
 
 export function shuffleArray<T>(arrayIn: T[]): T[] {
@@ -21,15 +21,30 @@ export function escapeXpathStr(str: string) {
   return `concat(${str2})`;
 }
 
-const sleepFixed = (ms: number) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+const sleepFixed = (ms: number, silent?: boolean): Promise<void> =>
+  new Promise((resolve) => {
+    let remaining = ms;
+
+    const interval = setInterval(() => {
+      remaining -= 1000;
+
+      if (remaining > 0 && !silent) {
+        log.temp("Waiting", formatMs(remaining), "...");
+      }
+    }, 1000);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      log.temp("Waited", formatMs(ms), ".");
+      resolve();
+    }, ms);
+  });
 
 const sleepWithDeviation = (ms: number, silent?: boolean) => {
   const deviation = ms * 0.2 * (2 * Math.random() - 1);
   const secondsDeviation = deviation % 60;
   const sleep = ms + secondsDeviation;
-  if (!silent) logger.log("Waiting", formatMs(sleep), "...");
-  return sleepFixed(sleep);
+  return sleepFixed(sleep, silent);
 };
 
 export const sleep = ({

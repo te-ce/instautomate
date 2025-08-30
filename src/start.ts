@@ -1,5 +1,5 @@
 import { Instauto } from "./bot.ts";
-import { logger, logFinish } from "./util/logger.ts";
+import { log, logFinish } from "./util/logger";
 import { setupBrowser } from "./actions/init.ts";
 import { runActions } from "./actions/runActions.ts";
 
@@ -13,9 +13,9 @@ import { runActions } from "./actions/runActions.ts";
 
     await runActions(instauto);
   } catch (err) {
-    logger.error(err);
+    log(err);
   } finally {
-    logger.log("Closing browser");
+    log("Closing browser");
     await logFinish();
     if (browser) await browser.close();
   }

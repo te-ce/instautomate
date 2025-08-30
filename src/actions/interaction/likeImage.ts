@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import { logger } from "src/util/logger";
+import { log } from "src/util/logger";
 import { Media, User } from "src/util/types";
 import { shuffleArray, sleep } from "src/util/util";
 import { navigateToUserAndGetData } from "../data";
@@ -27,12 +27,12 @@ export async function likeCurrentUserImagesPageCode({
     Math.random() * (likeImagesMax + 1 - likeImagesMin) + likeImagesMin,
   );
 
-  logger.log(`Liking ${numImagesToLike} image(s)`);
+  log(`Liking ${numImagesToLike} image(s)`);
 
   const images = imagesShuffled.slice(0, numImagesToLike);
 
   if (images.length < 1) {
-    logger.log("No images to like");
+    log("No images to like");
     return;
   }
 
@@ -98,7 +98,7 @@ export async function likeCurrentUserImagesPageCode({
           ({ poster } = video as HTMLVideoElement);
           ({ src } = video as HTMLVideoElement);
         } else {
-          logger.log("Could not determin mediaType");
+          log("Could not determin mediaType");
         }
 
         if (
@@ -110,9 +110,7 @@ export async function likeCurrentUserImagesPageCode({
             poster,
           } as Media)
         ) {
-          logger.log(
-            `shouldLikeMedia returned false for ${image.href}, skipping`,
-          );
+          log(`shouldLikeMedia returned false for ${image.href}, skipping`);
           return;
         }
       }
@@ -141,7 +139,7 @@ export async function likeCurrentUserImagesPageCode({
     await sleep({ seconds: 5, silent: true });
   }
 
-  logger.log("Done liking images");
+  log("Done liking images");
 }
 
 export async function likeUserImages({
@@ -169,7 +167,7 @@ export async function likeUserImages({
 
   await navigateToUserAndGetData({ username, page, userDataCache });
 
-  logger.log(`Liking ${likeImagesMin}-${likeImagesMax} user images`);
+  log(`Liking ${likeImagesMin}-${likeImagesMax} user images`);
   try {
     await page.exposeFunction("instautoSleep", sleep);
     await page.exposeFunction("instautoLog", (...args: any[]) =>
@@ -179,7 +177,7 @@ export async function likeUserImages({
       onImageLiked({ username, href }),
     );
   } catch (err) {
-    logger.log("Failed to expose functions", err);
+    log("Failed to expose functions", err);
   }
 
   // TODO: Type correctly

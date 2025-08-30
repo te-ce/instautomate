@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import { colorName, logger } from "./logger";
+import { colorName, log } from "./logger";
 import { escapeXpathStr, getUserPageUrl, sleep } from "./util";
 import { tryDeleteCookies } from "src/actions/cookies";
 import { getJsonDb } from "src/db/db";
@@ -26,7 +26,7 @@ export async function isActionBlocked(page: Page) {
 export async function checkActionBlocked(page: Page) {
   if (await isActionBlocked(page)) {
     const hours = 3;
-    logger.error(`Action Blocked, waiting ${hours} hours...`);
+    log(`Action Blocked, waiting ${hours} hours...`);
     await tryDeleteCookies();
     await sleep({ hours, silent: true });
     throw new Error("Aborted operation due to action blocked");
@@ -70,7 +70,7 @@ export async function doesUserFollowMe({
   const db = await getJsonDb();
   const { username: myUsername } = await getOptions();
   try {
-    logger.info("Checking if user", username, "follows us");
+    log.temp("Checking if user", username, "follows us");
     await navigateToUser(page, username);
 
     const followListButton = await page.$$(
@@ -78,7 +78,7 @@ export async function doesUserFollowMe({
     );
 
     if (followListButton.length === 0) {
-      logger.log("Following button not found");
+      log("Following button not found");
       return false;
     }
 
@@ -94,10 +94,10 @@ export async function doesUserFollowMe({
       await db.setUserFollowedMe(username);
     }
 
-    logger.log(`User ${colorName(username)} follows us: ${followsMe}`);
+    log(`User ${colorName(username)} follows us: ${followsMe}`);
     return followsMe;
   } catch (err) {
-    logger.error("Failed to check if user follows us", err);
+    log("Failed to check if user follows us", err);
     return undefined;
   }
 }

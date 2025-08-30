@@ -1,6 +1,6 @@
 import puppeteer, { Browser, Page } from "puppeteer";
 import { Options } from "src/util/types";
-import { logger, logStartup } from "src/util/logger";
+import { log, logStartup } from "src/util/logger";
 import { sleep } from "src/util/util";
 import UserAgent from "user-agents";
 import { isLoggedIn } from "src/util/status";
@@ -79,7 +79,7 @@ export const initialization = async (
       await page.click('a[href="/accounts/login/?source=auth_switcher"]');
       await sleep({ seconds: 1, silent: true });
     } catch (err) {
-      logger.info("No login page button, assuming we are on login form", err);
+      log("No login page button, assuming we are on login form", err);
     }
 
     // Mobile version https://github.com/mifi/SimpleInstaBot/issues/7
@@ -96,7 +96,7 @@ export const initialization = async (
     for (;;) {
       const didClickLogin = await tryClickLogin();
       if (didClickLogin) break;
-      logger.warn(
+      log(
         "Login button not found. Maybe you can help me click it? And also report an issue on github with a screenshot of what you're seeing :)",
       );
       await sleep({ seconds: 15 });
@@ -107,7 +107,7 @@ export const initialization = async (
     // Sometimes login button gets stuck with a spinner
     // https://github.com/mifi/SimpleInstaBot/issues/25
     if (!(await isLoggedIn(page))) {
-      logger.log("Still not logged in, trying to reload loading page");
+      log("Still not logged in, trying to reload loading page");
       await page.reload();
       await sleep({ minutes: 1 });
     }
@@ -115,7 +115,7 @@ export const initialization = async (
     let warnedAboutLoginFail = false;
     while (!(await isLoggedIn(page))) {
       if (!warnedAboutLoginFail)
-        logger.warn(
+        log(
           'WARNING: Login has not succeeded. This could be because of an incorrect username/password, or a "suspicious login attempt"-message. You need to manually complete the process, or if really logged in, click the Instagram logo in the top left to go to the Home page.',
         );
       warnedAboutLoginFail = true;

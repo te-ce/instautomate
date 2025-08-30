@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import keyBy from "lodash/keyBy";
 import { User } from "src/util/types";
 import { getOptions } from "../util/options";
-import { logger } from "src/util/logger";
+import { log } from "src/util/logger";
 import { DAY_IN_MS, HOUR_IN_MS } from "src/util/const";
 
 export type JsonDB = Awaited<ReturnType<typeof initJsonDb>>;
@@ -34,12 +34,9 @@ export const initJsonDb = async () => {
         paths.unfollowed,
         JSON.stringify(Object.values(prevUnfollowedUsers)),
       );
-      await fs.writeFile(
-        paths.likedPhotos,
-        JSON.stringify(prevLikedPhotos),
-      );
+      await fs.writeFile(paths.likedPhotos, JSON.stringify(prevLikedPhotos));
     } catch (err) {
-      logger.error("Failed to save database", err);
+      log("Failed to save database", err);
     }
   }
 
@@ -50,7 +47,7 @@ export const initJsonDb = async () => {
         "username",
       );
     } catch (err) {
-      logger.warn("No followed database found", err);
+      log("No followed database found", err);
     }
     try {
       prevUnfollowedUsers = keyBy(
@@ -58,14 +55,14 @@ export const initJsonDb = async () => {
         "username",
       );
     } catch (err) {
-      logger.warn("No unfollowed database found", err);
+      log("No unfollowed database found", err);
     }
     try {
       prevLikedPhotos = JSON.parse(
         await fs.readFile(paths.likedPhotos, "utf8"),
       );
     } catch (err) {
-      logger.warn("No likes database found", err);
+      log("No likes database found", err);
     }
   }
 

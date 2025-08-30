@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import { colorName, logger } from "src/util/logger";
+import { colorName, log } from "src/util/logger";
 import { sleep } from "src/util/util";
 import { navigateToUser } from "../navigation";
 import { findUnfollowButton, findFollowButton } from "../locator";
@@ -14,15 +14,15 @@ export async function toggleMuteUser(
   const unfollowButton = await findUnfollowButton(page);
   const followButton = await findFollowButton(page);
 
+  log.temp(`Setting mute of ${colorName(username)} to ${mute}...`);
+
   if (!unfollowButton && followButton) {
-    logger.log("We are not following user, can't set silent");
+    log("We are not following user, can't set silent");
     return;
   }
 
   if (!unfollowButton && !followButton) {
-    logger.log(
-      "Can't find unfollow/follow button, are you already on the user page?",
-    );
+    log("Can't find unfollow/follow button, are you already on the user page?");
     return;
   }
 
@@ -31,7 +31,6 @@ export async function toggleMuteUser(
   const muteSectionButton = await page.$$(`xpath///span[text()='Mute']`);
 
   if (!muteSectionButton) {
-    logger.log("Can't find mute section button");
     return;
   }
 
@@ -62,9 +61,9 @@ export async function toggleMuteUser(
   if (saveButton.length > 0) {
     await saveButton[0].click();
     await sleep({ seconds: 2, silent: true });
-    logger.log(`Toggled mute of ${colorName(username)} to ${mute}`);
+    log(`Toggled mute of ${colorName(username)} to ${mute}`);
   } else {
-    logger.log(`Failed to save mute of ${colorName(username)} to ${mute}`);
+    log(`Failed to save mute of ${colorName(username)} to ${mute}`);
   }
 
   if (closeButton.length > 0) {

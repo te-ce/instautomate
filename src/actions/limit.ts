@@ -1,6 +1,6 @@
 import { getJsonDb } from "src/db/db";
 import { LIMIT_COLOR, DAY_IN_MS, HOUR_IN_MS } from "src/util/const";
-import { logStats, logger } from "src/util/logger";
+import { logStats, log } from "src/util/logger";
 import { getOptions } from "src/util/options";
 import { sleep } from "src/util/util";
 
@@ -10,17 +10,14 @@ export class DailyLimitReachedError extends Error {
     this.name = "DailyLimitReachedError";
   }
 }
-const {
-  limits,
-  enableActions,
-} = await getOptions();
+const { limits, enableActions } = await getOptions();
 const { maxFollowActionsPerDay, maxLikesPerDay, maxFollowsPerHour } = limits;
 
 async function checkReachedFollowedUserDayLimit() {
   const db = await getJsonDb();
 
   const currentFollowCount = db.getNumFollowedUsersThisTimeUnit(DAY_IN_MS, 24);
-  logger.log(
+  log(
     `${LIMIT_COLOR}Followed ${currentFollowCount}/${maxFollowActionsPerDay} daily users`,
   );
 
@@ -43,7 +40,7 @@ async function checkReachedFollowedUserHourLimit() {
     db.getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, currentHour) >=
     maxFollowsPerHour
   ) {
-    logger.log("Hourly follow rate limit reached, pausing 10 min.");
+    log("Hourly follow rate limit reached, pausing 10 min.");
     await sleep({ minutes: 10, silent: true });
     return checkReachedFollowedUserHourLimit();
   }
@@ -56,7 +53,7 @@ async function checkReachedLikedUserDayLimit() {
     return;
   }
   const currentLikesCount = db.getLikedPhotosLastTimeUnit(DAY_IN_MS, 24).length;
-  logger.log(
+  log(
     `${LIMIT_COLOR}Liked ${currentLikesCount}/${maxLikesPerDay} daily pictures`,
   );
 
