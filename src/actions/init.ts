@@ -7,7 +7,7 @@ import { isLoggedIn } from "src/util/status";
 import { tryDeleteCookies, tryLoadCookies, trySaveCookies } from "./cookies";
 import { goHome, tryPressButton } from "./navigation";
 import { getOptions } from "src/util/options";
-import { throttle } from "./limit";
+import { throttle } from "./trottle";
 
 export const initialization = async (
   page: Page,

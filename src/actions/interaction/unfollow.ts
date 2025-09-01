@@ -4,7 +4,7 @@ import { navigateToUser } from "../navigation";
 import { getJsonDb } from "src/db/db";
 import { Page } from "puppeteer";
 import { sleep } from "src/util/util";
-import { throttle } from "../limit";
+import { throttle } from "../trottle";
 import {
   findFollowButton,
   findUnfollowButton,

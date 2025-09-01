@@ -1,13 +1,11 @@
 import Instauto from "src/bot";
 import { getOptions } from "src/util/options";
 import { sleep } from "src/util/util";
-import { throttle } from "./limit";
+import { throttle } from "./trottle";
 import { log } from "src/util/logger";
 import { WARNING_COLOR } from "src/util/const";
 
-export const runActions = async (
-  instauto: Awaited<ReturnType<typeof Instauto>>,
-) => {
+export const run = async (instauto: Awaited<ReturnType<typeof Instauto>>) => {
   const options = await getOptions();
   const MIN_UNFOLLOW_COUNT = 10;
   const maxUnfollowActionsPerDay =
@@ -28,6 +26,8 @@ export const runActions = async (
     await sleep({ minutes: 1 });
   }
 
+  await throttle();
+
   if (options.enableActions.unfollowAny) {
     const unfollowedAny = await instauto.unfollowAnyFollowed({
       limit: maxUnfollowActionsPerDay - unfollowedCount,
@@ -39,6 +39,8 @@ export const runActions = async (
 
     if (unfollowedCount > 0) await sleep({ minutes: 1 });
   }
+
+  await throttle();
 
   if (options.enableActions.follow) {
     await instauto.followUsersFollowers({
@@ -53,7 +55,8 @@ export const runActions = async (
   }
 
   await throttle();
-  log(`${WARNING_COLOR}Limits not reached, running actions again`);
+
+  log(`${WARNING_COLOR}Limits not reached, running again`);
   await sleep({ minutes: 2 });
-  await runActions(instauto);
+  await run(instauto);
 };

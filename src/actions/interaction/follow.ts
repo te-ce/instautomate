@@ -4,7 +4,7 @@ import { Page } from "puppeteer";
 import { checkActionBlocked, isUserPrivate } from "src/util/status";
 import { getOptions } from "src/util/options";
 import { sleep } from "src/util/util";
-import { throttle } from "../limit";
+import { throttle } from "../trottle";
 import { takeScreenshot } from "../screenshot";
 import { findFollowButton, findUnfollowButton } from "../locator";
 import { User } from "src/util/types";

@@ -4,7 +4,7 @@ import { LIMIT_COLOR, INSTAGRAM_URL } from "src/util/const";
 import { Page } from "puppeteer";
 import { getPageJson, shuffleArray, sleep } from "src/util/util";
 import { takeScreenshot } from "./screenshot";
-import { throttle } from "./limit";
+import { throttle } from "./trottle";
 import { getJsonDb } from "src/db/db";
 import { likeUserImages } from "./interaction/likeImage";
 import { User } from "src/util/types";
