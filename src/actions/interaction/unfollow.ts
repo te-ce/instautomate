@@ -124,6 +124,7 @@ export async function safelyUnfollowUsers({
   let peopleUnfollowed = 0;
 
   for (const username of usersToUnfollow) {
+    await throttle();
     if (await condition(username)) {
       try {
         const userFound = await navigateToUser(page, username);
@@ -166,8 +167,6 @@ export async function safelyUnfollowUsers({
           log(`Have unfollowed limit of ${limit}, stopping`);
           return peopleUnfollowed;
         }
-
-        await throttle();
       } catch (err) {
         log(
           `Failed to unfollow ${colorName(username)}, continuing with next`,
