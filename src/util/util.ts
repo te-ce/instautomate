@@ -29,16 +29,16 @@ const sleepFixed = (ms: number, silent?: boolean): Promise<void> =>
       remaining -= 1000;
 
       if (remaining > 0) {
-        log.temp("Waiting", formatMs(remaining), "...");
+        log.temp(
+          `Waiting ${formatMs(ms)}, remaining: ${formatMs(remaining)}...`,
+        );
       }
     }, 1000);
 
     setTimeout(() => {
       clearInterval(interval);
       if (!silent) {
-        log.temp("Waited", formatMs(ms), ".");
-      } else {
-        log("Waited", formatMs(ms), ".");
+        log(`Waited ${formatMs(ms)}`);
       }
       resolve();
     }, ms);

@@ -7,7 +7,7 @@ import { WARNING_COLOR } from "src/util/const";
 
 export const run = async (instauto: Awaited<ReturnType<typeof Instauto>>) => {
   const options = await getOptions();
-  const MIN_UNFOLLOW_COUNT = 10;
+  const MIN_UNFOLLOW_COUNT = 0;
   const maxUnfollowActionsPerDay =
     MIN_UNFOLLOW_COUNT +
     Math.floor(options.limits.maxFollowActionsPerDay * (2 / 3));
