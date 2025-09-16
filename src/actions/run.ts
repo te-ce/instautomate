@@ -4,13 +4,16 @@ import { sleep } from "src/util/util";
 import { throttle } from "./trottle";
 import { log } from "src/util/logger";
 import { WARNING_COLOR } from "src/util/const";
+import { getJsonDb } from "src/db/db";
 
 export const run = async (instauto: Awaited<ReturnType<typeof Instauto>>) => {
   const options = await getOptions();
+  const db = await getJsonDb();
   const MIN_UNFOLLOW_COUNT = 0;
+  const remainingFollowActionsPerDay =
+    options.limits.maxFollowActionsPerDay - db.getDailyFollowedUsersCount();
   const maxUnfollowActionsPerDay =
-    MIN_UNFOLLOW_COUNT +
-    Math.floor(options.limits.maxFollowActionsPerDay * (2 / 3));
+    MIN_UNFOLLOW_COUNT + Math.floor(remainingFollowActionsPerDay * (2 / 3));
 
   let unfollowedCount = 0;
 
