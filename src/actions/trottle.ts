@@ -16,7 +16,7 @@ const { maxFollowActionsPerDay, maxLikesPerDay, maxFollowsPerHour } = limits;
 async function checkReachedFollowedUserDayLimit() {
   const db = await getJsonDb();
 
-  const currentFollowCount = db.getNumFollowedUsersThisTimeUnit(DAY_IN_MS, 24);
+  const currentFollowCount = db.getFollowActionsCount(DAY_IN_MS, 24);
   log(
     `${LIMIT_COLOR}Followed ${currentFollowCount}/${maxFollowActionsPerDay} daily users`,
   );
@@ -37,7 +37,7 @@ async function checkReachedFollowedUserHourLimit() {
   const currentHour = new Date().getHours();
 
   if (
-    db.getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, currentHour) >=
+    db.getFollowActionsCount(HOUR_IN_MS, currentHour) >=
     maxFollowsPerHour
   ) {
     log("Hourly follow rate limit reached, pausing 10 min.");

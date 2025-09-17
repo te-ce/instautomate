@@ -11,7 +11,7 @@ export const run = async (instauto: Awaited<ReturnType<typeof Instauto>>) => {
   const db = await getJsonDb();
   const MIN_UNFOLLOW_COUNT = 0;
   const remainingFollowActionsPerDay =
-    options.limits.maxFollowActionsPerDay - db.getDailyFollowedUsersCount();
+    options.limits.maxFollowActionsPerDay - db.getFollowActionsCountDaily();
   const maxUnfollowActionsPerDay =
     MIN_UNFOLLOW_COUNT + Math.floor(remainingFollowActionsPerDay * (2 / 3));
 

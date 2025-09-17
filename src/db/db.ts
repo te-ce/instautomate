@@ -76,7 +76,7 @@ export const initJsonDb = async () => {
     await trySaveDb();
   }
 
-  function getFollowedLastTimeUnit(timeUnit: number, resetHour: number) {
+  function getFollowedUsers(timeUnit: number, resetHour: number) {
     const now = new Date().setHours(resetHour, 0, 0, 0);
     return Object.values(prevFollowedUsers).filter(
       (u) => now - u.time < timeUnit,
@@ -88,7 +88,7 @@ export const initJsonDb = async () => {
     await trySaveDb();
   }
 
-  function getUnfollowedLastTimeUnit(timeUnit: number, resetHour: number) {
+  function getUnfollowedUsers(timeUnit: number, resetHour: number) {
     const now = new Date().setHours(resetHour, 0, 0, 0);
     return Object.values(prevUnfollowedUsers).filter(
       (u) => now - u.time < timeUnit,
@@ -101,17 +101,22 @@ export const initJsonDb = async () => {
     await trySaveDb();
   }
 
-  function getNumFollowedUsersThisTimeUnit(
-    timeUnit: number,
-    resetHour: number,
-  ) {
+  const getFollowedUsersCount = (timeUnit: number, resetHour: number) => {
+    return getFollowedUsers(timeUnit, resetHour).length;
+  };
+
+  const getUnfollowedUsersCount = (timeUnit: number, resetHour: number) => {
     const now = new Date().setHours(resetHour, 0, 0, 0);
 
+    return getUnfollowedUsers(timeUnit, resetHour).filter(
+      (user) => !user.noActionTaken && now - user.time < timeUnit,
+    ).length;
+  };
+
+  function getFollowActionsCount(timeUnit: number, resetHour: number) {
     return (
-      getFollowedLastTimeUnit(timeUnit, resetHour).length +
-      getUnfollowedLastTimeUnit(timeUnit, resetHour).filter(
-        (user) => !user.noActionTaken && now - user.time < timeUnit,
-      ).length
+      getFollowedUsersCount(timeUnit, resetHour) +
+      getUnfollowedUsersCount(timeUnit, resetHour)
     );
   }
 
@@ -121,16 +126,24 @@ export const initJsonDb = async () => {
     await trySaveDb();
   };
 
-  const getHourlyFollowedUsersCount = () => {
+  const getFollowActionsCountHourly = () => {
     const resetHour = new Date().getHours();
-    return getNumFollowedUsersThisTimeUnit(HOUR_IN_MS, resetHour);
+    return getFollowActionsCount(HOUR_IN_MS, resetHour);
   };
 
-  const getDailyFollowedUsersCount = () => {
-    return getNumFollowedUsersThisTimeUnit(DAY_IN_MS, 24);
+  const getFollowActionsCountDaily = () => {
+    return getFollowActionsCount(DAY_IN_MS, 24);
   };
 
-  const getLikedPhotosCount = () => {
+  const getFollowedUsersCountDaily = () => {
+    return getFollowedUsersCount(DAY_IN_MS, 24);
+  };
+
+  const getUnfollowedUsersCountDaily = () => {
+    return getUnfollowedUsersCount(DAY_IN_MS, 24);
+  };
+
+  const getLikedPhotosCountDaily = () => {
     return getLikedPhotosLastTimeUnit(DAY_IN_MS, 24).length;
   };
 
@@ -140,17 +153,19 @@ export const initJsonDb = async () => {
     save: trySaveDb,
     addPrevFollowedUser,
     addPrevUnfollowedUser,
-    getFollowedLastTimeUnit,
-    getUnfollowedLastTimeUnit,
+    getFollowedUsers,
+    getUnfollowedUsers,
     getLikedPhotosLastTimeUnit,
     addLikedPhoto,
     prevFollowedUsers,
     prevUnfollowedUsers,
     prevLikedPhotos,
-    getNumFollowedUsersThisTimeUnit,
-    getHourlyFollowedUsersCount,
-    getDailyFollowedUsersCount,
-    getLikedPhotosCount,
+    getUnfollowedUsersCountDaily,
+    getFollowedUsersCountDaily,
+    getFollowActionsCount,
+    getFollowActionsCountHourly,
+    getFollowActionsCountDaily,
+    getLikedPhotosCountDaily,
     startTime,
     actions,
     setUserFollowedMe,

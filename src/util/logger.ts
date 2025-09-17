@@ -35,6 +35,9 @@ export const logStartup = async () => {
   const { username } = await getOptions();
   const color = STARTUP_COLOR;
 
+  const prevFollowedCount = db.getFollowedUsersCountDaily();
+  const prevUnfollowedUsersCount = db.getUnfollowedUsersCountDaily();
+
   log("");
   log("");
   log(`${color}== STARTING UP ==`);
@@ -42,12 +45,21 @@ export const logStartup = async () => {
   log(`${color}Current time: ${db.startTime.toLocaleTimeString()}`);
   log(`${color}Username: ${colorName(username)}`);
   log("");
+  log(`${color}Stats last 24h:`);
+  log(
+    `${color}${prevFollowedCount}x follow, ${prevUnfollowedUsersCount}x unfollow`,
+  );
+  log("");
   log("");
 };
 
 export const logFinish = async () => {
   const options = await getOptions();
+  const db = await getJsonDb();
   const color = FINISH_COLOR;
+
+  const totalFollowedCount = db.getFollowedUsersCountDaily();
+  const totalUnfollowedCount = db.getUnfollowedUsersCountDaily();
 
   log("");
   log("");
@@ -56,6 +68,11 @@ export const logFinish = async () => {
   log(`${color}Current time: ${new Date().toLocaleTimeString()}`);
   log(`${color}Username: ${colorName(options.username)}`);
   await logStats();
+  log("");
+  log(`${color}Stats last 24h:`);
+  log(
+    `${color}${totalFollowedCount}x follow, ${totalUnfollowedCount}x unfollow`,
+  );
   log("");
   log("");
 };
