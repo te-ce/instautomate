@@ -165,7 +165,7 @@ export async function processUserFollowers({
     getFollowers: true,
     page,
   })) {
-    log("User followers batch", followersBatch);
+    log("User followers batch", JSON.stringify(followersBatch));
 
     const shuffledFollowers = shuffleArray(followersBatch);
     for (const follower of shuffledFollowers) {
