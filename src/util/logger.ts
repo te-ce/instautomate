@@ -55,11 +55,7 @@ export const logStartup = async () => {
 
 export const logFinish = async () => {
   const options = await getOptions();
-  const db = await getJsonDb();
   const color = FINISH_COLOR;
-
-  const totalFollowedCount = db.getFollowedUsersCountDaily();
-  const totalUnfollowedCount = db.getUnfollowedUsersCountDaily();
 
   log("");
   log("");
@@ -67,21 +63,18 @@ export const logFinish = async () => {
   log(`${color}Current day: ${new Date().toLocaleDateString()}`);
   log(`${color}Current time: ${new Date().toLocaleTimeString()}`);
   log(`${color}Username: ${colorName(options.username)}`);
-  await logStats();
-  log("");
-  log(`${color}Stats last 24h:`);
-  log(
-    `${color}${totalFollowedCount}x follow, ${totalUnfollowedCount}x unfollow`,
-  );
+  await logStats(true);
   log("");
   log("");
 };
 
-export const logStats = async () => {
+export const logStats = async (full?: boolean) => {
   const db = await getJsonDb();
+  const color = STATS_COLOR;
+  const totalFollowedCount = db.getFollowedUsersCountDaily();
+  const totalUnfollowedCount = db.getUnfollowedUsersCountDaily();
   let actions = "";
   let areActionsDone = false;
-  const color = STATS_COLOR;
 
   for (const [action, count] of Object.entries(db.actions)) {
     if (count > 0) {
@@ -96,6 +89,11 @@ export const logStats = async () => {
     log(`${color}[${duration} | ${actionsFormatted}]`);
   } else {
     log(`${color}[${duration} | 0x actions]`);
+  }
+  if (full) {
+    log(
+      `${COLORS.DARK_GREEN}[Last 24h: | ${totalFollowedCount}x follow, ${totalUnfollowedCount}x unfollow]`,
+    );
   }
 };
 

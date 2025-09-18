@@ -36,10 +36,7 @@ async function checkReachedFollowedUserHourLimit() {
   }
   const currentHour = new Date().getHours();
 
-  if (
-    db.getFollowActionsCount(HOUR_IN_MS, currentHour) >=
-    maxFollowsPerHour
-  ) {
+  if (db.getFollowActionsCount(HOUR_IN_MS, currentHour) >= maxFollowsPerHour) {
     log("Hourly follow rate limit reached, pausing 10 min.");
     await sleep({ minutes: 10, silent: true });
     return checkReachedFollowedUserHourLimit();
@@ -64,8 +61,11 @@ async function checkReachedLikedUserDayLimit() {
   }
 }
 
+let count = 0;
 export async function throttle() {
-  await logStats();
+  count++;
+  const logFull = count % 5 == 0;
+  await logStats(logFull);
   await checkReachedFollowedUserDayLimit();
   await checkReachedFollowedUserHourLimit();
   await checkReachedLikedUserDayLimit();
