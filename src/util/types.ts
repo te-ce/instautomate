@@ -31,12 +31,8 @@ export const OptionsSchema = z.object({
       .describe(
         "Global limit that prevents follow or unfollows (total) to exceed this number over a sliding window of one hour",
       ),
-    maxFollowActionsPerDay: z
-      .number()
-      .min(0)
-      .describe(
-        "Global limit that prevents follow or unfollows (total) to exceed this number over a sliding window of one day:",
-      ),
+    maxFollowsPerDay: z.number().min(0),
+    maxUnfollowsPerDay: z.number().min(0),
     maxLikesPerDay: z
       .number()
       .min(0)

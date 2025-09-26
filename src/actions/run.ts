@@ -9,17 +9,16 @@ import { getJsonDb } from "src/db/db";
 export const run = async (instauto: Awaited<ReturnType<typeof Instauto>>) => {
   const options = await getOptions();
   const db = await getJsonDb();
-  const MIN_UNFOLLOW_COUNT = 0;
   const remainingFollowActionsPerDay =
-    options.limits.maxFollowActionsPerDay - db.getFollowActionsCountDaily();
-  const maxUnfollowActionsPerDay =
-    MIN_UNFOLLOW_COUNT + Math.floor(remainingFollowActionsPerDay * (2 / 3));
+    options.limits.maxFollowsPerDay - db.getFollowedUsersCountDaily();
+  const remainingUnfollowActionsPerDay =
+    options.limits.maxUnfollowsPerDay - db.getUnfollowedUsersCountDaily();
 
   let unfollowedCount = 0;
 
   if (options.enableActions.unfollowNonMutual) {
     const unfollowedNonMutual = await instauto.unfollowNonMutualFollowers({
-      limit: maxUnfollowActionsPerDay - unfollowedCount,
+      limit: remainingUnfollowActionsPerDay - unfollowedCount,
       page: instauto.getPage(),
       userDataCache: instauto.userDataCache,
     });
@@ -33,7 +32,7 @@ export const run = async (instauto: Awaited<ReturnType<typeof Instauto>>) => {
 
   if (options.enableActions.unfollowAny) {
     const unfollowedAny = await instauto.unfollowAnyFollowed({
-      limit: maxUnfollowActionsPerDay - unfollowedCount,
+      limit: remainingUnfollowActionsPerDay - unfollowedCount,
       page: instauto.getPage(),
       userDataCache: instauto.userDataCache,
     });
@@ -48,7 +47,7 @@ export const run = async (instauto: Awaited<ReturnType<typeof Instauto>>) => {
   if (options.enableActions.follow) {
     await instauto.followUsersFollowers({
       usersToFollowFollowersOf: options.usersToFollowFollowersOf,
-      maxFollowsTotal: options.limits.maxFollowActionsPerDay - unfollowedCount,
+      maxFollowsTotal: remainingFollowActionsPerDay,
       skipPrivate: options.skipPrivate,
       enableLikeImages: options.enableActions.likeImages,
       likeImagesMax: options.limits.maxLikesPerDay,

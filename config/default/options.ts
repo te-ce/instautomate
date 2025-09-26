@@ -9,7 +9,8 @@ export const options: Omit<Options, "paths" | "password"> = {
 
   limits: {
     maxFollowsPerHour: "unlimited",
-    maxFollowActionsPerDay: 50,
+    maxFollowsPerDay: 30,
+    maxUnfollowsPerDay: 60,
     maxLikesPerDay: 30,
   },
   skipPrivate: true,

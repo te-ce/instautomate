@@ -11,10 +11,16 @@ export class DailyLimitReachedError extends Error {
   }
 }
 const { limits, enableActions } = await getOptions();
-const { maxFollowActionsPerDay, maxLikesPerDay, maxFollowsPerHour } = limits;
+const {
+  maxFollowsPerDay,
+  maxUnfollowsPerDay,
+  maxLikesPerDay,
+  maxFollowsPerHour,
+} = limits;
 
 async function checkReachedFollowedUserDayLimit() {
   const db = await getJsonDb();
+  const maxFollowActionsPerDay = maxFollowsPerDay + maxUnfollowsPerDay;
 
   const currentFollowCount = db.getFollowActionsCount(DAY_IN_MS, 24);
   log(
