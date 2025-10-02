@@ -60,5 +60,6 @@ export const run = async (instauto: Awaited<ReturnType<typeof Instauto>>) => {
 
   log(`${WARNING_COLOR}Limits not reached, running again`);
   await sleep({ minutes: 2 });
+  db.runNumber++;
   await run(instauto);
 };

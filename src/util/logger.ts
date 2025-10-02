@@ -18,10 +18,13 @@ const tempLog = (...args: unknown[]) => {
   lastLogWasTemporary = true;
 };
 
-const log = (...args: unknown[]) => {
+const log = async (...args: unknown[]) => {
+  const db = await getJsonDb();
+  const date = new Date().toLocaleString("DE-de");
+
   console.log(
     lastLogWasTemporary ? CLEAR_PREVIOUS : "",
-    `${DATE_COLOR}${new Date().toISOString()}${COLORS.RESET}`,
+    `${DATE_COLOR}[#${db.runNumber}] ${date} ${COLORS.RESET}`,
     ...args,
   );
   lastLogWasTemporary = false;

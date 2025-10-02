@@ -23,6 +23,7 @@ export const initJsonDb = async () => {
   let prevLikedPhotos: User[] = [];
   const startTime = new Date();
   const actions = { follow: 0, unfollow: 0, like: 0, unlike: 0 };
+  const runNumber = 1;
 
   async function trySaveDb() {
     try {
@@ -168,6 +169,7 @@ export const initJsonDb = async () => {
     getLikedPhotosCountDaily,
     startTime,
     actions,
+    runNumber,
     setUserFollowedMe,
   };
 };
